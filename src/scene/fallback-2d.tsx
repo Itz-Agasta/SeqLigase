@@ -1,5 +1,5 @@
 import { useLab } from "@/state/lab-store";
-import { candidateOf } from "./build-molecule";
+import { candidateOf } from "./candidate";
 
 const SCALE = 46;
 

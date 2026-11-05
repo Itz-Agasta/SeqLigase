@@ -6,7 +6,7 @@ import { useLab } from "@/state/lab-store";
 import { useTokenSelection } from "./use-token-selection";
 
 const CHIP =
-  "relative flex h-[30px] select-none items-center justify-center overflow-hidden rounded-md border font-mono text-xs whitespace-nowrap transition-colors duration-100";
+  "relative flex h-[30px] select-none items-center justify-center overflow-hidden rounded-md border px-1 font-mono text-xs whitespace-nowrap transition-colors duration-100";
 
 function tokenRole(record: MoleculeRecord, i: number) {
   const kind = record.tokenKinds[i];
@@ -69,7 +69,7 @@ export function SequenceStrip() {
       <TooltipProvider delayDuration={250}>
         <div
           className="grid items-stretch gap-1"
-          style={{ gridTemplateColumns: `76px repeat(${tokens.length}, minmax(0, 1fr))` }}
+          style={{ gridTemplateColumns: `68px repeat(${tokens.length}, minmax(max-content, 1fr))` }}
         >
           <div />
           {tokens.map((_, i) => (

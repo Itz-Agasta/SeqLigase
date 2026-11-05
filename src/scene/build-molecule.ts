@@ -1,6 +1,7 @@
 import * as THREE from "three";
-import type { Atom, Bond, Candidate, MoleculeRecord, ReconstructResponse } from "@/engine/types";
+import type { Atom, Bond, MoleculeRecord, ReconstructResponse } from "@/engine/types";
 import type { LabView } from "@/state/lab-store";
+import { candidateOf } from "./candidate";
 import type { ScenePalette } from "./colors";
 import { bondSegments, centroid, position, type Vec3 } from "./geometry";
 
@@ -50,14 +51,6 @@ const UP = new THREE.Vector3(0, 1, 0);
 export function atomRadius(el: string) {
   if (el === "H") return 0.2;
   return el === "C" ? 0.34 : 0.36;
-}
-
-export function candidateOf(
-  record: MoleculeRecord,
-  response: ReconstructResponse | null,
-): Candidate | null {
-  if (!response?.candidate_id || response.candidate_id === "original") return null;
-  return record.candidates.find((c) => c.id === response.candidate_id) ?? null;
 }
 
 const physical = (color: string, extra: THREE.MeshPhysicalMaterialParameters = {}) =>
