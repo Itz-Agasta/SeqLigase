@@ -113,6 +113,51 @@ def properties(m) -> dict:
     }
 
 
+_GROUPS = {
+    "alcohol": "[OX2H][CX4]",
+    "phenol": "[OX2H]c",
+    "carboxylic acid": "[CX3](=O)[OX2H1]",
+    "ester": "[CX3](=O)[OX2H0][#6]",
+    "amide": "[NX3][CX3](=O)",
+    "ketone": "[#6][CX3](=O)[#6]",
+    "aldehyde": "[CX3H1](=O)",
+    "ether": "[OD2;!$(OC=O)]([#6])[#6]",
+    "primary amine": "[NX3;H2;!$(NC=O)][#6]",
+    "secondary amine": "[NX3;H1;!$(NC=O)]([#6])[#6]",
+    "tertiary amine": "[NX3;H0;!$(NC=O)]([#6])([#6])[#6]",
+    "nitrile": "[NX1]#[CX2]",
+    "imine": "[CX3]=[NX2]",
+    "nitroso": "[NX2]=O",
+    "fluoro": "[F]",
+    "alkene": "[CX3;!a]=[CX3;!a]",
+    "alkyne": "[CX2]#[CX2]",
+    "aromatic nitrogen": "[n]",
+    "aromatic oxygen": "[o]",
+}
+_FLAGS = {
+    "three-membered ring (strained)": "[r3]",
+    "four-membered ring (strained)": "[r4]",
+    "N-N bond": "[#7]~[#7]",
+    "N-O bond": "[#7]~[#8]",
+    "O-O bond (weak)": "[#8]~[#8]",
+    "allene": "[CX3]=[CX2]=[CX3]",
+}
+_GROUP_QUERIES = {k: Chem.MolFromSmarts(v) for k, v in _GROUPS.items()}
+_FLAG_QUERIES = {k: Chem.MolFromSmarts(v) for k, v in _FLAGS.items()}
+
+def analysis(m, members=frozenset()) -> dict:
+    """Structural facts for the written note. Flags are rules to prompt a check, not stability verdicts."""
+    sizes = sorted(len(r) for r in m.GetRingInfo().AtomRings())
+    return {
+        "formula": formula(m),
+        "heavyAtoms": m.GetNumAtoms(),
+        "ringSizes": sizes,
+        "aromaticRings": rd.CalcNumAromaticRings(m),
+        "groups": [k for k, q in _GROUP_QUERIES.items() if m.HasSubstructMatch(q)],
+        "flags": [k for k, q in _FLAG_QUERIES.items() if m.HasSubstructMatch(q)],
+        "inQm9": Chem.MolToSmiles(m, canonical=True, isomericSmiles=False) in members,
+    }
+
 def formula(m) -> str:
     return rd.CalcMolFormula(m)
 

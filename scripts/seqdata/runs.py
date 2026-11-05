@@ -109,3 +109,27 @@ def build_record(entry: dict, stats: predictor.TokenStats) -> dict:
         "candidates": [c for c in candidates.values() if c],
         "runs": runs,
     }
+
+def note_facts(record: dict, members=frozenset()) -> dict:
+    """Facts only the written note uses: what each prediction is, and what its runner-up would have made."""
+    cache: dict[str, dict | None] = {}
+
+    def analyse(selfies: str) -> dict | None:
+        if selfies not in cache:
+            dec = chem.decode(selfies)
+            ok = dec.mol is not None and dec.mol.GetNumAtoms() > 0
+            cache[selfies] = {"smiles": dec.smiles, **chem.analysis(dec.mol, members)} if ok else None
+        return cache[selfies]
+
+    runs = {}
+    for key, run in record["runs"].items():
+        tokens = chem.sf.split_selfies(run["predicted_selfies"])
+        tokens = list(tokens)
+        pos = min(run["mask_positions"], key=lambda p: run["topk"][str(p)][0]["p"] - run["topk"][str(p)][1]["p"])
+        top, second = run["topk"][str(pos)][:2]
+        tokens[pos] = second["token"]
+        runs[key] = {
+            "predicted": analyse(run["predicted_selfies"]),
+            "alternative": {"position": pos, "token": second["token"], "p": second["p"], "topToken": top["token"], "topP": top["p"], "result": analyse("".join(tokens))},
+        }
+    return {"original": analyse(record["selfies"]), "runs": runs}

@@ -1,12 +1,13 @@
 // Saves Gemini notes for the demo's default runs, so they still show if the network drops.
 // node --env-file=.env scripts/build_notes.ts
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { buildNotePrompt, type NoteRecord, streamNote } from "../api/explain.ts";
+import { buildNotePrompt, type NoteFacts, type NoteRecord, streamNote } from "../api/explain.ts";
 import { DEFAULT_MASKS, pickSpan } from "../src/engine/mask.ts";
 
 const OUT = "public/data/notes.json";
 const MODELS = ["T5", "ChemBERTa", "BiLSTM", "LSTM"];
 const load = (id: string) => JSON.parse(readFileSync(`public/data/molecules/${id}.json`, "utf8")) as NoteRecord;
+const loadFacts = (id: string) => JSON.parse(readFileSync(`public/data/note-facts/${id}.json`, "utf8")) as NoteFacts;
 const numbers = (text: string) => text.match(/\d+(?:\.\d+)?/g) ?? [];
 
 /** Every number in a note must already be in its facts, apart from small counts like "2 sentences". */
@@ -15,15 +16,23 @@ function invented(note: string, prompt: string) {
   return numbers(note).filter((n) => !known.has(n));
 }
 
+const VOCABULARY = ["alcohol", "phenol", "carboxylic acid", "ester", "amide", "ketone", "aldehyde", "ether", "primary amine", "secondary amine", "tertiary amine", "nitrile", "imine", "nitroso", "fluoro", "alkene", "alkyne", "aromatic nitrogen", "aromatic oxygen", "three-membered", "four-membered", "N-N", "N-O", "O-O", "allene"];
+
+/** A note can't mention a group or flag that isn't anywhere in its facts. */
+function unlisted(note: string, prompt: string) {
+  const word = (w: string) => new RegExp(`\\b${w}s?\\b`, "i");
+  return VOCABULARY.filter((w) => word(w).test(note) && !word(w).test(prompt));
+}
+
 const finished = (note: string) => /[.!?]$/.test(note);
 
 async function write(prompt: string) {
   for (let attempt = 1; ; attempt++) {
     try {
       const note = (await streamNote(prompt).text).trim();
-      const bad = invented(note, prompt);
+      const bad = [...invented(note, prompt), ...unlisted(note, prompt)];
       if (finished(note) && !bad.length) return note;
-      console.warn(`  retrying: ${finished(note) ? `numbers not in facts: ${bad.join(", ")}` : "unfinished"}`);
+      console.warn(`  retrying: ${finished(note) ? `not in facts: ${bad.join(", ")}` : "unfinished"}`);
     } catch (err) {
       console.warn(`  retrying: ${String(err).slice(0, 120)}`);
     }
@@ -44,7 +53,8 @@ for (const [id, model, start, length] of jobs) {
   const key = `${id}:${model}:${start}:${length}`;
   if (finished(notes[key] ?? "")) continue;
   const record = load(id);
-  notes[key] = await write(buildNotePrompt(record, record.runs[`${model}:${start}:${length}`]));
+  const runKey = `${model}:${start}:${length}`;
+  notes[key] = await write(buildNotePrompt(record, record.runs[runKey], loadFacts(id), runKey));
   writeFileSync(OUT, JSON.stringify(notes, null, 1) + "\n");
   console.log(key);
 }

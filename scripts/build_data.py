@@ -31,12 +31,15 @@ def main() -> None:
     stats = predictor.TokenStats.fit([chem.to_selfies(s) for s in selected])
     vocab = len(stats.uni) + 5  # [PAD], [BOS], [EOS], [MASK], [UNK]
 
-    (OUT / "molecules").mkdir(parents=True, exist_ok=True)
-    for stale in (OUT / "molecules").glob("*.json"):
-        stale.unlink()
+    for folder in ("molecules", "note-facts"):
+        (OUT / folder).mkdir(parents=True, exist_ok=True)
+        for stale in (OUT / folder).glob("*.json"):
+            stale.unlink()
     write(OUT / "catalog.json", entries)
     for entry in entries:
-        write(OUT / f"molecules/{entry['id']}.json", runs.build_record(entry, stats))
+        record = runs.build_record(entry, stats)
+        write(OUT / f"molecules/{entry['id']}.json", record)
+        write(OUT / f"note-facts/{entry['id']}.json", runs.note_facts(record, members))
         print("built", entry["id"])
     write(OUT / "experiments.json", experiments.build(vocab, funnel, len(selected)))
     space.build(selected, {e["canonical"]: e["id"] for e in entries}, OUT)

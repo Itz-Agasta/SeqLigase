@@ -6,15 +6,21 @@ import { streamText } from "ai";
 const MODELS = ["T5", "ChemBERTa", "BiLSTM", "LSTM"];
 const GEMINI_MODEL = "gemini-3.8-flash";
 
-const SYSTEM = `You write a short note shown under a molecular reconstruction result, for chemists.
+const SYSTEM = `You write a short note under a molecular reconstruction result, for practising chemists.
 Write 1 or 2 plain sentences, at most 45 words in total.
-The reader can already see the similarity, edit distance and validity, so never repeat those. Say what they can't see: what changed chemically, and what that does to the properties.
+The reader can already see the similarity, edit distance, validity, property table and token probabilities. Tell them what those don't: the structural consequence, and what is worth checking.
+If the prediction differs from the original, lead with the most important of: aromaticity or ring changes, functional groups gained or lost, then any structural flag. Say whether the predicted molecule is known in QM9. If it isn't, call it unconfirmed.
+If it is an exact recovery, give the least certain position with both percentages, then what changes if its runner-up is used. Only report what the "Runner-up versus original" fact lists.
 Rules:
-- Use only the facts provided, and quote their numbers exactly.
-- Describe structures by atoms, rings and functional groups you can read directly from the SMILES. Only name a predicted compound if you are certain of the name.
-- Never explain why the model made its choice. You don't know that.
+- Use only the facts provided. Name a group, ring or flag only if it is listed. Quote numbers exactly.
+- A flag is a reason to check a structure, not proof that it is unstable.
+- Not being in QM9 doesn't mean a molecule can't exist. QM9 only covers up to nine heavy atoms.
+- Only name the original molecule. Describe every other structure by its groups and rings, never by a compound name.
+- Only say the runner-up restores the original if the facts say so.
+- Mention aromaticity only if it changes. Never write about zero aromatic rings.
+- Don't grade with words like moderately, weakly or strongly. Let the percentages speak.
+- Never say why the model made its choice. You don't know that.
 - Never mention synthesis, hazards, uses, applications or sources.
-- If the prediction is an exact recovery, write one sentence saying which part of the molecule the masked tokens rebuilt. Base it only on the "Masked tokens map to" fact, and don't infer which atom a token is. Quote no numbers.
 - No markdown, headings or preamble.`;
 
 interface Props {
@@ -43,6 +49,33 @@ export interface NoteRecord {
   tokenBond: Record<string, number>;
   properties: Props;
   runs: Record<string, Run>;
+}
+export interface Analysis {
+  smiles: string;
+  formula: string;
+  heavyAtoms: number;
+  ringSizes: number[];
+  aromaticRings: number;
+  groups: string[];
+  flags: string[];
+  inQm9: boolean;
+}
+export interface NoteFacts {
+  original: Analysis;
+  runs: Record<
+    string,
+    {
+      predicted: Analysis | null;
+      alternative: {
+        position: number;
+        token: string;
+        p: number;
+        topToken: string;
+        topP: number;
+        result: Analysis | null;
+      };
+    }
+  >;
 }
 export interface NoteRequest {
   moleculeId: string;
@@ -91,27 +124,75 @@ function describeToken(record: NoteRecord, pos: number): string {
   return `${token} is a structural token that places no atom`;
 }
 
-/** Facts come only from the precomputed RDKit results, never from the caller. */
-export function buildNotePrompt(record: NoteRecord, run: Run): string {
-  const predicted = run.mask_positions.map((pos) => run.topk[pos]?.[0]?.token ?? "?");
-  const original = run.mask_positions.map((pos) => record.tokens[pos]);
+const percent = (p: number) => `${(p * 100).toFixed(1)}%`;
+const list = (items: string[]) => (items.length ? items.join(", ") : "none");
+
+const ringNames = (a: Analysis) =>
+  a.ringSizes.length ? a.ringSizes.map((n) => `${n}-membered`).join(", ") : "no rings";
+
+function describeChange(from: Analysis, to: Analysis): string {
+  if (to.smiles === from.smiles) return "same molecule as the original";
+  const gained = to.groups.filter((g) => !from.groups.includes(g));
+  const lost = from.groups.filter((g) => !to.groups.includes(g));
+  const flags = to.flags.filter((f) => !from.flags.includes(f));
+  const changes = [
+    `different molecule, ${to.formula}`,
+    `groups gained: ${list(gained)}`,
+    `groups lost: ${list(lost)}`,
+    `new flags: ${list(flags)}`,
+    `known in QM9: ${to.inQm9 ? "yes" : "no"}`,
+  ];
+  if (to.aromaticRings !== from.aromaticRings)
+    changes.push(`aromatic rings: ${from.aromaticRings} to ${to.aromaticRings}`);
+  if (to.ringSizes.join() !== from.ringSizes.join())
+    changes.push(`rings: ${ringNames(from)} to ${ringNames(to)}`);
+  return changes.join("; ");
+}
+
+function describeStructure(a: Analysis): string {
   return [
-    `Original: ${record.name}, ${record.formula}, SMILES ${record.smiles}`,
+    `SMILES ${a.smiles}, ${a.formula}`,
+    `rings: ${ringNames(a)}`,
+    `aromatic rings: ${a.aromaticRings}`,
+    `groups: ${list(a.groups)}`,
+    `flags: ${list(a.flags)}`,
+    `known in QM9: ${a.inQm9 ? "yes" : "no"}`,
+  ].join("; ");
+}
+
+/** Facts come only from the precomputed RDKit results, never from the caller. */
+export function buildNotePrompt(
+  record: NoteRecord,
+  run: Run,
+  facts: NoteFacts,
+  key: string,
+): string {
+  const { predicted, alternative: alt } = facts.runs[key];
+  const original = facts.original;
+  const lines = [
+    `Original: ${record.name}. ${describeStructure(original)}`,
     `Original properties: ${describe(record.properties)}`,
-    `Masked SELFIES tokens: ${original.join(" ")}`,
     `Masked tokens map to: ${run.mask_positions.map((pos) => describeToken(record, pos)).join("; ")}`,
-    `Predicted SELFIES tokens: ${predicted.join(" ")}`,
     `Exact recovery: ${run.exact_recovery ? "yes" : "no"}`,
-    `RDKit valid: ${run.valid ? "yes" : "no"}`,
-    ...(run.valid
-      ? [
-          `Predicted SMILES: ${run.predicted_smiles}`,
-          `Predicted properties: ${describe(run.properties)}`,
-          `Morgan Tanimoto similarity to the original: ${run.tanimoto_similarity.toFixed(3)}`,
-        ]
-      : []),
-    `Normalised edit distance: ${run.normalized_edit_distance.toFixed(2)}`,
-  ].join("\n");
+  ];
+  if (predicted && !run.exact_recovery) {
+    const gained = predicted.groups.filter((g) => !original.groups.includes(g));
+    const lost = original.groups.filter((g) => !predicted.groups.includes(g));
+    lines.push(
+      `Predicted: ${describeStructure(predicted)}`,
+      `Predicted properties: ${describe(run.properties)}`,
+      `Groups gained: ${list(gained)}. Groups lost: ${list(lost)}.`,
+      `Aromatic rings: ${original.aromaticRings} to ${predicted.aromaticRings}. Heavy atoms: ${original.heavyAtoms} to ${predicted.heavyAtoms}.`,
+    );
+  }
+  if (!predicted) lines.push("The predicted sequence did not decode to a valid molecule.");
+  lines.push(
+    `Least certain position ${alt.position}: ${alt.topToken} at ${percent(alt.topP)}, runner-up ${alt.token} at ${percent(alt.p)}.`,
+    alt.result
+      ? `Runner-up versus original: ${describeChange(original, alt.result)}`
+      : "The runner-up would not decode to a valid molecule.",
+  );
+  return lines.join("\n");
 }
 
 export function streamNote(prompt: string) {
@@ -135,9 +216,12 @@ export default {
     const data = await readFile(file, "utf8").catch(() => null);
     if (!data) return new Response("Unknown molecule", { status: 404 });
     const record = JSON.parse(data) as NoteRecord;
-    const run = record.runs[`${req.model}:${req.start}:${req.length}`];
+    const key = `${req.model}:${req.start}:${req.length}`;
+    const run = record.runs[key];
     if (!run) return new Response("Unknown run", { status: 404 });
+    const factsFile = path.join(process.cwd(), "public/data/note-facts", `${req.moleculeId}.json`);
+    const facts = JSON.parse(await readFile(factsFile, "utf8")) as NoteFacts;
 
-    return streamNote(buildNotePrompt(record, run)).toTextStreamResponse();
+    return streamNote(buildNotePrompt(record, run, facts, key)).toTextStreamResponse();
   },
 };

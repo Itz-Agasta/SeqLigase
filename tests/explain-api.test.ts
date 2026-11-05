@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import handler, { buildNotePrompt, type NoteRecord, parseNoteRequest } from "../api/explain.ts";
+import handler, {
+  type Analysis,
+  buildNotePrompt,
+  type NoteFacts,
+  type NoteRecord,
+  parseNoteRequest,
+} from "../api/explain.ts";
 
 const props = { mol_weight: 94.11, logp: 1.39, hbd: 1, hba: 1 };
 const run = {
@@ -32,6 +38,40 @@ const record: NoteRecord = {
   properties: props,
   runs: { "BiLSTM:4:2": run },
 };
+const structure = (over: Partial<Analysis>): Analysis => ({
+  smiles: "Oc1ccccc1",
+  formula: "C6H6O",
+  heavyAtoms: 7,
+  ringSizes: [6],
+  aromaticRings: 1,
+  groups: ["phenol"],
+  flags: [],
+  inQm9: true,
+  ...over,
+});
+const facts: NoteFacts = {
+  original: structure({}),
+  runs: {
+    "BiLSTM:4:2": {
+      predicted: structure({
+        smiles: "OC1=CC=CN=C1",
+        formula: "C5H5NO",
+        groups: ["phenol", "aromatic nitrogen"],
+        inQm9: false,
+        flags: ["N-O bond"],
+      }),
+      alternative: {
+        position: 5,
+        token: "[C]",
+        p: 0.097,
+        topToken: "[N]",
+        topP: 0.62,
+        result: structure({ aromaticRings: 0 }),
+      },
+    },
+  },
+};
+const prompt = (r = run) => buildNotePrompt(record, r, facts, "BiLSTM:4:2");
 const url = (q: string) => `https://x.test/api/explain?${q}`;
 
 afterEach(() => {
@@ -61,21 +101,54 @@ describe("note request", () => {
 });
 
 describe("note prompt", () => {
-  it("states the computed values and the tokens that changed", () => {
-    const prompt = buildNotePrompt(record, run);
-    expect(prompt).toContain("Masked SELFIES tokens: [=C] [C]");
-    expect(prompt).toContain("Predicted SELFIES tokens: [=C] [N]");
-    expect(prompt).toContain("OC1=CC=CN=C1");
-    expect(prompt).toContain("0.400");
-    expect(prompt).toContain("LogP 0.78");
-    expect(prompt).toContain("[=C] is a C atom bonded to O (single), C (double)");
+  it("states the structural changes a chemist would check", () => {
+    const text = prompt();
+    expect(text).toContain("Groups gained: aromatic nitrogen. Groups lost: none.");
+    expect(text).toContain("flags: N-O bond");
+    expect(text).toContain("known in QM9: no");
+    expect(text).toContain("LogP 0.78");
+    expect(text).toContain("[=C] is a C atom bonded to O (single), C (double)");
   });
 
-  it("leaves out predicted values for an invalid structure", () => {
-    const prompt = buildNotePrompt(record, { ...run, valid: false });
-    expect(prompt).toContain("RDKit valid: no");
-    expect(prompt).not.toContain("Predicted properties");
-    expect(prompt).not.toContain("Tanimoto");
+  it("describes what the runner-up would have made", () => {
+    const text = prompt();
+    expect(text).toContain("Least certain position 5: [N] at 62.0%, runner-up [C] at 9.7%.");
+    expect(text).toContain("Runner-up versus original: same molecule as the original");
+  });
+
+  it("lists only what the runner-up changes", () => {
+    const changed = structuredClone(facts);
+    changed.runs["BiLSTM:4:2"].alternative.result = structure({
+      smiles: "C1=CC=CC=C1",
+      formula: "C6H6",
+      groups: [],
+      aromaticRings: 1,
+      flags: ["N-N bond"],
+      inQm9: false,
+    });
+    const text = buildNotePrompt(record, run, changed, "BiLSTM:4:2");
+    expect(text).toContain("groups lost: phenol");
+    expect(text).toContain("new flags: N-N bond");
+    expect(text).not.toContain("aromatic rings: 1 to");
+  });
+
+  it("leaves the predicted section out of an exact recovery", () => {
+    const text = prompt({ ...run, exact_recovery: true });
+    expect(text).toContain("Exact recovery: yes");
+    expect(text).not.toContain("Groups gained");
+    expect(text).toContain("runner-up");
+  });
+
+  it("says when a prediction didn't decode", () => {
+    const broken = { ...facts.runs["BiLSTM:4:2"], predicted: null };
+    const text = buildNotePrompt(
+      record,
+      { ...run, valid: false },
+      { ...facts, runs: { "BiLSTM:4:2": broken } },
+      "BiLSTM:4:2",
+    );
+    expect(text).toContain("did not decode");
+    expect(text).not.toContain("Predicted properties");
   });
 });
 
