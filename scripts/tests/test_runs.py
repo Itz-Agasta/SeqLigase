@@ -61,3 +61,10 @@ def test_exact_runs_recover_token_accuracy_one():
     for run in rec()["runs"].values():
         if run["predicted_selfies"] == run["original_selfies"]:
             assert run["token_accuracy"] == 1.0 and run["exact_recovery"] is True and run["tanimoto_similarity"] == 1.0
+
+
+def test_records_carry_a_depiction():
+    r = rec()
+    assert len(r["depiction"]) == len(r["atomTokens"])
+    for c in r["candidates"]:
+        assert len(c["depiction"]) == sum(a["el"] != "H" for a in c["atoms"])

@@ -6,7 +6,7 @@ interface Options {
   count: number;
   start: number;
   length: number;
-  onChange(start: number, length: number): void;
+  onChange: (start: number, length: number) => void;
 }
 
 export interface KeyLike {

@@ -4,7 +4,6 @@
 # ///
 """Regenerates public/data. Run with: uv run scripts/build_data.py"""
 import json
-import shutil
 import sys
 from pathlib import Path
 
@@ -32,9 +31,9 @@ def main() -> None:
     stats = predictor.TokenStats.fit([chem.to_selfies(s) for s in selected])
     vocab = len(stats.uni) + 5  # [PAD], [BOS], [EOS], [MASK], [UNK]
 
-    if OUT.exists():
-        shutil.rmtree(OUT)
-    (OUT / "molecules").mkdir(parents=True)
+    (OUT / "molecules").mkdir(parents=True, exist_ok=True)
+    for stale in (OUT / "molecules").glob("*.json"):
+        stale.unlink()
     write(OUT / "catalog.json", entries)
     for entry in entries:
         write(OUT / f"molecules/{entry['id']}.json", runs.build_record(entry, stats))

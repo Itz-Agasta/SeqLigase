@@ -45,6 +45,7 @@ export interface Candidate {
   tokens: string[];
   formula: string;
   is3d: boolean;
+  depiction: [number, number][];
   atoms: CandidateAtom[];
   bonds: Bond[];
   properties: Properties;
@@ -86,6 +87,7 @@ export interface MoleculeRecord {
   formula: string;
   properties: Properties;
   is3d: boolean;
+  depiction: [number, number][];
   atoms: Atom[];
   bonds: Bond[];
   candidates: Candidate[];
@@ -137,9 +139,9 @@ export interface ReconstructRequest {
 }
 
 export interface InferenceClient {
-  catalog(): Promise<CatalogEntry[]>;
-  molecule(id: string): Promise<MoleculeRecord>;
-  reconstruct(req: ReconstructRequest): Promise<ReconstructResponse>;
-  experiments(): Promise<ExperimentsData>;
-  space(): Promise<SpaceData>;
+  catalog: () => Promise<CatalogEntry[]>;
+  molecule: (id: string) => Promise<MoleculeRecord>;
+  reconstruct: (req: ReconstructRequest) => Promise<ReconstructResponse>;
+  experiments: () => Promise<ExperimentsData>;
+  space: () => Promise<SpaceData>;
 }

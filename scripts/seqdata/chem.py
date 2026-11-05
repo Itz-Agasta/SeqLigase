@@ -148,6 +148,14 @@ def conformer(m) -> Conformer:
     return Conformer(h, _coords(h), True)
 
 
+def depiction(m) -> list[list[float]]:
+    """RDKit 2D layout of the heavy atoms."""
+    flat = Chem.Mol(m)
+    AllChem.Compute2DCoords(flat)
+    c = flat.GetConformer()
+    return [[round(c.GetAtomPosition(i).x, 3), round(c.GetAtomPosition(i).y, 3)] for i in range(flat.GetNumAtoms())]
+
+
 def align(probe: Conformer, reference: Conformer, pairs: list[tuple[int, int]]) -> Conformer:
     """Superpose probe on reference using (probe atom, reference atom) pairs."""
     if probe.is_3d and reference.is_3d and len(pairs) >= 3:

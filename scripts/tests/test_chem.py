@@ -56,3 +56,10 @@ def test_conformer_failure_falls_back_to_2d(monkeypatch):
     c = chem.conformer(chem.mol("CCO"))
     assert not c.is_3d
     assert all(x[2] == 0 for x in c.coords)
+
+
+def test_depiction_has_flat_coordinates_for_heavy_atoms():
+    d = chem.depiction(chem.mol("Oc1ccccc1"))
+    assert len(d) == 7
+    assert all(len(p) == 2 for p in d)
+    assert len({tuple(p) for p in d}) == 7

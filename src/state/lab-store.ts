@@ -19,20 +19,23 @@ export interface LabState {
   view: LabView;
   phase: MomentPhase;
   hoveredToken: number | null;
+  showHydrogens: boolean;
+  spin: boolean;
   displayed: Record<number, { token: string; p: number; locked: boolean }>;
   error: string | null;
-  load(selection: LabSelection): Promise<void>;
-  setMolecule(id: string): Promise<void>;
-  setModel(model: ModelId): void;
-  setMask(start: number, length: number): void;
-  setMaskPolicy(policy: { ratio?: MaskRatio; maxSpan?: MaxSpan; seed?: number }): void;
-  setView(view: LabView): void;
-  setPhase(phase: MomentPhase): void;
-  setHoveredToken(token: number | null): void;
-  setDisplayed(displayed: LabState["displayed"]): void;
-  fetchResponse(): Promise<ReconstructResponse | null>;
-  reconstruct(): Promise<void>;
-  finish(response: ReconstructResponse): void;
+  load: (selection: LabSelection) => Promise<void>;
+  setMolecule: (id: string) => Promise<void>;
+  setModel: (model: ModelId) => void;
+  setMask: (start: number, length: number) => void;
+  setMaskPolicy: (policy: { ratio?: MaskRatio; maxSpan?: MaxSpan; seed?: number }) => void;
+  setView: (view: LabView) => void;
+  toggleDisplay: (key: "showHydrogens" | "spin") => void;
+  setPhase: (phase: MomentPhase) => void;
+  setHoveredToken: (token: number | null) => void;
+  setDisplayed: (displayed: LabState["displayed"]) => void;
+  fetchResponse: () => Promise<ReconstructResponse | null>;
+  reconstruct: () => Promise<void>;
+  finish: (response: ReconstructResponse) => void;
 }
 
 const STALE = { status: "stale", response: null, view: "masked", displayed: {} } as const;
@@ -48,6 +51,8 @@ export function createLabStore(api: InferenceClient) {
     view: "masked",
     phase: "idle",
     hoveredToken: null,
+    showHydrogens: true,
+    spin: true,
     displayed: {},
     error: null,
 
@@ -102,6 +107,7 @@ export function createLabStore(api: InferenceClient) {
     },
 
     setView: (view) => set({ view }),
+    toggleDisplay: (key) => set((s) => ({ [key]: !s[key] })),
     setPhase: (phase) => set({ phase }),
     setHoveredToken: (hoveredToken) => set({ hoveredToken }),
     setDisplayed: (displayed) => set({ displayed }),
@@ -137,3 +143,5 @@ export function createLabStore(api: InferenceClient) {
 }
 
 export const useLab = createLabStore(client);
+
+if (import.meta.env.DEV) (window as unknown as { __lab: typeof useLab }).__lab = useLab;
