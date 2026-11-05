@@ -33,6 +33,8 @@ export function RunsPage() {
   return (
     <>
       <Header
+        title="Runs"
+        note="Every reconstruction from this browser, newest first. Open one to see it in the Repair Lab."
         actions={
           runs.length > 0 ? (
             <Button
@@ -57,16 +59,9 @@ export function RunsPage() {
             </Button>
           ) : null
         }
-      >
-        <b className="text-foreground font-medium">Runs</b>
-      </Header>
+      />
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-[1760px] px-6 pt-[18px] pb-11">
-          <h1 className="text-xl font-semibold tracking-tight">Runs</h1>
-          <p className="text-muted-foreground mb-3.5">
-            Every reconstruction from this browser, newest first. Open one to see it in the Repair
-            Lab.
-          </p>
+        <div className="mx-auto max-w-[1760px] px-4 pt-4 pb-11">
           {runs.length === 0 ? (
             <div className="rounded-[10px] border border-dashed px-6 py-12 text-center">
               <p className="mb-3 font-medium">No runs yet</p>

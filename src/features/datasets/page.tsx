@@ -29,12 +29,9 @@ export function DatasetsPage() {
   }, []);
   return (
     <>
-      <Header>
-        <b className="text-foreground font-medium">Datasets</b>
-      </Header>
+      <Header title="Datasets" note="Where the molecules come from, and how they’re cleaned." />
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-[1760px] px-6 pt-[18px] pb-11">
-          <h1 className="mb-3.5 text-xl font-semibold tracking-tight">Datasets</h1>
+        <div className="mx-auto max-w-[1760px] px-4 pt-4 pb-11">
           {error ? (
             <p role="alert" className="mb-3 text-xs">
               {error} Reload the page to try again.

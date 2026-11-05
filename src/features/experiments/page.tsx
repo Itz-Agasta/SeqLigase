@@ -41,31 +41,25 @@ export function ExperimentsPage() {
   const current = data?.splits[split];
   return (
     <>
-      <Header>
-        <b className="text-foreground font-medium">Experiments</b>
-      </Header>
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-[1760px] px-6 pt-[18px] pb-11">
-          <div className="mb-3.5 flex items-end justify-between gap-4">
-            <div>
-              <h1 className="text-xl font-semibold tracking-tight">Experiments</h1>
-              <p className="text-muted-foreground">
-                Eight controlled runs across recurrent architectures, evaluated on held-out QM9
-                molecules.
-              </p>
-            </div>
-            <div className="w-[190px] flex-none">
-              <Segmented<Split>
-                label="Split"
-                value={split}
-                onChange={setSplit}
-                options={[
-                  { value: "random", label: "Random split" },
-                  { value: "scaffold", label: "Scaffold split" },
-                ]}
-              />
-            </div>
+      <Header
+        title="Experiments"
+        note="Eight controlled runs across recurrent architectures, evaluated on held-out QM9 molecules."
+        actions={
+          <div className="w-[190px]">
+            <Segmented<Split>
+              label="Split"
+              value={split}
+              onChange={setSplit}
+              options={[
+                { value: "random", label: "Random split" },
+                { value: "scaffold", label: "Scaffold split" },
+              ]}
+            />
           </div>
+        }
+      />
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-[1760px] px-4 pt-4 pb-11">
           {error ? (
             <div role="alert" className="flex items-center gap-3 text-xs">
               {error}

@@ -30,10 +30,7 @@ export function RepairLabPage() {
 
   return (
     <>
-      <Header actions={<ShareExportActions />}>
-        Repair Lab <span className="text-border-strong">/</span>{" "}
-        <b className="text-foreground font-medium">{record?.name}</b>
-      </Header>
+      <Header parent="Repair Lab" title={record?.name} actions={<ShareExportActions />} />
       {error ? (
         <div
           role="alert"
