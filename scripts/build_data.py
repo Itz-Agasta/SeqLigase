@@ -41,7 +41,7 @@ def main() -> None:
         write(OUT / f"molecules/{entry['id']}.json", record)
         write(OUT / f"note-facts/{entry['id']}.json", runs.note_facts(record, members))
         print("built", entry["id"])
-    write(OUT / "experiments.json", experiments.build(vocab, funnel, len(selected), dict(stats.uni)))
+    write(OUT / "experiments.json", experiments.build(vocab, funnel, len(selected)))
     space.build(selected, {e["canonical"]: e["id"] for e in entries}, OUT)
     print(f"Vocabulary: {vocab}")
 

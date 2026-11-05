@@ -6,12 +6,10 @@ export function ModelLegend({
   values,
   hidden,
   onToggle,
-  caption,
 }: {
   values?: Partial<Record<ModelId, string>>;
   hidden?: ReadonlySet<ModelId>;
   onToggle?: (m: ModelId) => void;
-  caption?: string;
 }) {
   return (
     <div className="mb-1 -ml-1.5 flex flex-wrap gap-1">
@@ -45,9 +43,6 @@ export function ModelLegend({
           </span>
         );
       })}
-      {caption ? (
-        <span className="text-subtle flex items-center px-1.5 py-0.5 text-xs">{caption}</span>
-      ) : null}
     </div>
   );
 }

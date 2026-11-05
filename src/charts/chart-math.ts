@@ -26,23 +26,3 @@ export function curveDomain(series: CurvePoint[][], range: [number, number]): [n
   if (points.length === 0) return [0, 1];
   return [Math.min(...points.map((p) => p.lo)), Math.max(...points.map((p) => p.hi))];
 }
-
-/** Moves label positions apart by at least `gap`, keeping their order and staying close to where they started. */
-export function spreadLabels(positions: number[], gap: number): number[] {
-  const order = positions.map((_, i) => i).sort((a, b) => positions[a] - positions[b]);
-  const placed = order.map((i) => positions[i]);
-  for (let pass = 0; pass < 20; pass++) {
-    for (let k = 1; k < placed.length; k++) {
-      const overlap = gap - (placed[k] - placed[k - 1]);
-      if (overlap > 0) {
-        placed[k - 1] -= overlap / 2;
-        placed[k] += overlap / 2;
-      }
-    }
-  }
-  const out = [...positions];
-  order.forEach((i, k) => {
-    out[i] = placed[k];
-  });
-  return out;
-}

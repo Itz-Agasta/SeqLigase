@@ -9,7 +9,7 @@ export function ExperimentTable({ split }: { split: SplitData }) {
   return (
     <ChartFrame
       title="Experiment matrix"
-      note="Token metrics count masked positions. Exact recovery counts test molecules. Validity counts generated candidates. E1 is a fingerprint baseline with no sequence output, and E8 reports validity only."
+      note="Token metrics count masked positions. Exact recovery counts test molecules. Validity counts generated candidates."
       className="col-span-12 pb-1.5"
     >
       <table className="w-full border-collapse text-[12.5px]">
