@@ -45,7 +45,7 @@ export function CompareRace() {
   const done = runId > 0 && finished >= rows.length;
 
   return (
-    <section className="col-span-12">
+    <section className="flex min-h-0 flex-1 flex-col">
       <div className="bg-surface flex flex-wrap items-center gap-3 px-[15px] py-3">
         <div className="mr-auto">
           <h3 className="text-[13px] font-medium">Compare models</h3>
@@ -104,10 +104,10 @@ export function CompareRace() {
           {running ? "Comparing…" : done ? "Compare again" : "Run comparison"}
         </Button>
       </div>
-      <div className="grid grid-cols-4 gap-px border-t">
+      <div className="grid min-h-0 flex-1 grid-cols-4 gap-px border-t">
         {record
           ? rows.map((row) => (
-              <div key={row.model} className="bg-surface min-w-0">
+              <div key={row.model} className="bg-surface flex min-h-0 min-w-0 flex-col">
                 <div className="flex items-center gap-2 px-3 py-2 text-[13px] font-medium">
                   <i
                     className="size-2 rounded-full"
@@ -115,7 +115,7 @@ export function CompareRace() {
                   />
                   {row.model}
                 </div>
-                <div className="relative h-[280px] bg-[#050507] min-[1600px]:h-[420px]">
+                <div className="relative min-h-[170px] flex-1 bg-[#050507]">
                   <WebGLGate
                     fallback={
                       <p className="text-muted-foreground grid h-full place-items-center p-4 text-center text-xs">

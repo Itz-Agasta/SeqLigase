@@ -16,9 +16,9 @@ export function ModelsPage() {
         title="Models"
         note="Four recurrent architectures, compared on the same masked input."
       />
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-[1760px] px-4 pt-4 pb-11">
-          <div className="bg-border grid grid-cols-12 gap-px overflow-hidden rounded-[10px] border">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <div className="mx-auto flex min-h-[620px] w-full max-w-[1760px] flex-1 flex-col px-4 py-4">
+          <div className="bg-border flex min-h-0 flex-1 flex-col gap-px overflow-hidden rounded-[10px] border">
             <CompareRace />
             {data ? <ArchitectureTable data={data} /> : null}
           </div>
