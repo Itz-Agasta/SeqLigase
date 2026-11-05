@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -125,6 +126,13 @@ export function RunForm({ onRun }: { onRun: () => void }) {
       >
         {running ? "Reconstructing" : "Reconstruct"}
         <kbd className="font-mono text-[11px] opacity-60">⌘↵</kbd>
+      </Button>
+      <Button
+        asChild
+        variant="outline"
+        className="mt-1.5 h-[29px] w-full text-[12.5px] font-normal"
+      >
+        <Link to="/models">Compare models</Link>
       </Button>
     </div>
   );

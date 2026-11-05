@@ -25,3 +25,12 @@ export function readPalette(): ScenePalette {
     muted: cssVar("--muted-foreground"),
   };
 }
+
+/** The moment plays on dark space in both themes. */
+export const MOMENT_PALETTE: Partial<ScenePalette> = {
+  C: "#9aa1ab",
+  H: "#e6e8ec",
+  brand: "#6f7cf0",
+  warn: "#e0a84e",
+  muted: "#a1a3a9",
+};

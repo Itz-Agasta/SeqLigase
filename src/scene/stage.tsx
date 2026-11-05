@@ -16,7 +16,7 @@ import {
   buildMolecule,
   type BuiltMolecule,
 } from "./build-molecule";
-import { readPalette, type ScenePalette } from "./colors";
+import { MOMENT_PALETTE, readPalette } from "./colors";
 import { createDirector, type Playback } from "./director";
 import { Fallback2D } from "./fallback-2d";
 import { createRig, type Rig } from "./moment-rig";
@@ -27,7 +27,7 @@ gsap.ticker.lagSmoothing(0);
 const REDUCED = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const SPACE = new THREE.Color(0x050507);
 const parentQuat = new THREE.Quaternion();
-const MOMENT_PALETTE: Partial<ScenePalette> = {
+export const MOMENT_PALETTE: Partial<ScenePalette> = {
   C: "#9aa1ab",
   H: "#e6e8ec",
   brand: "#6f7cf0",
@@ -56,7 +56,7 @@ function framingFor(stage: HTMLElement | null, radius: number, fovDegrees: numbe
   };
 }
 
-function RoomLighting() {
+export function RoomLighting() {
   const get = useThree((s) => s.get);
   useEffect(() => {
     const { gl, scene } = get();
