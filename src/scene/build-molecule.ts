@@ -415,7 +415,7 @@ export function buildMolecule({
     group.add(sprite);
   });
 
-  const radius = Math.max(1.5, ...atoms.map((a) => a.position.length())) + 1.2;
+  const radius = Math.max(1.5, ...atoms.map((a) => a.position.length())) + (wantShells ? 1.2 : 0.7);
   const built: BuiltMolecule = {
     group,
     atoms,
