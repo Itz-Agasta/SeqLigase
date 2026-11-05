@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { client } from "@/engine/client";
 import type { ReconstructRequest } from "@/engine/types";
 
@@ -43,7 +44,15 @@ export function ExplainNote({ request }: { request: ReconstructRequest }) {
 
   return (
     <div className="mt-2.5 border-t pt-2.5" aria-live="polite">
-      {status === "idle" ? action("Explain result") : null}
+      {status === "idle" ? (
+        <Button
+          variant="outline"
+          className="h-[29px] w-full text-[12.5px] font-normal"
+          onClick={() => void explain()}
+        >
+          Explain result
+        </Button>
+      ) : null}
       {status === "failed" ? (
         <p className="text-muted-foreground text-xs">
           Couldn&rsquo;t write a note. {action("Try again")}
