@@ -195,3 +195,23 @@
     opacity: 1;
   }
 }
+
+.chart-draw {
+  stroke-dasharray: 1;
+  animation: chart-draw 0.9s ease-out both;
+}
+
+@keyframes chart-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chart-draw {
+    animation: none;
+  }
+}
