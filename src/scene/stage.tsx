@@ -27,13 +27,6 @@ gsap.ticker.lagSmoothing(0);
 const REDUCED = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const SPACE = new THREE.Color(0x050507);
 const parentQuat = new THREE.Quaternion();
-export const MOMENT_PALETTE: Partial<ScenePalette> = {
-  C: "#9aa1ab",
-  H: "#e6e8ec",
-  brand: "#6f7cf0",
-  warn: "#e0a84e",
-  muted: "#a1a3a9",
-};
 
 interface Framing {
   ox: number;

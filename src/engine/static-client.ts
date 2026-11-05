@@ -1,3 +1,4 @@
+import { decodeSpace } from "./space";
 import type {
   CatalogEntry,
   ExperimentsData,
