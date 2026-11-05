@@ -6,7 +6,7 @@ import { useLab } from "@/state/lab-store";
 import { useTokenSelection } from "./use-token-selection";
 
 const CHIP =
-  "relative flex h-[30px] select-none items-center justify-center overflow-hidden rounded-md border px-1 font-mono text-xs whitespace-nowrap transition-colors duration-100";
+  "relative flex h-[30px] select-none items-center justify-center overflow-hidden rounded-md border px-[3px] font-mono text-xs whitespace-nowrap transition-colors duration-100";
 
 function tokenRole(record: MoleculeRecord, i: number) {
   const kind = record.tokenKinds[i];

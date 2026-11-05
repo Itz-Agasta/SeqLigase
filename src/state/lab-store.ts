@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { client } from "@/engine/client";
 import { type MaskRatio, type MaxSpan, pickSpan } from "@/engine/mask";
 import type { DisplayedToken } from "@/scene/director";
+import { qualityFromSearch, type QualityTier } from "@/scene/quality";
 import type { InferenceClient, ModelId, MoleculeRecord, ReconstructResponse } from "@/engine/types";
 import { runLog } from "@/features/runs/run-log";
 import { clampSelection, DEFAULT_SELECTION, type LabSelection } from "./url-state";
@@ -21,6 +22,7 @@ export interface LabState {
   view: LabView;
   phase: MomentPhase;
   hoveredToken: number | null;
+  quality: QualityTier;
   showHydrogens: boolean;
   spin: boolean;
   displayed: Record<number, DisplayedToken>;
@@ -58,6 +60,7 @@ export function createLabStore(api: InferenceClient) {
     view: "masked",
     phase: "idle",
     hoveredToken: null,
+    quality: typeof window === "undefined" ? "high" : qualityFromSearch(window.location.search),
     showHydrogens: true,
     spin: true,
     displayed: {},

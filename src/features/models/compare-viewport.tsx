@@ -8,6 +8,7 @@ import { MOMENT_PALETTE, readPalette } from "@/scene/colors";
 import { createDirector } from "@/scene/director";
 import { createRig, type Rig } from "@/scene/moment-rig";
 import { RoomLighting } from "@/scene/stage";
+import { useLab } from "@/state/lab-store";
 
 const PALETTE = () => ({ ...readPalette(), ...MOMENT_PALETTE });
 const REDUCED = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -89,7 +90,7 @@ function Scene({
       record,
       response,
       palette,
-      particles: 700,
+      particles: useLab.getState().quality === "low" ? 300 : 700,
       fitDistance: fit,
       pixelRatio: gl.getPixelRatio(),
     });

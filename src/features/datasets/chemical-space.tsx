@@ -18,10 +18,12 @@ function Scene({
   space,
   catalog,
   focus,
+  paused,
 }: {
   space: SpaceData;
   catalog: CatalogEntry[];
   focus: string;
+  paused: boolean;
 }) {
   const navigate = useNavigate();
   const { show, hide } = useTip();
@@ -140,6 +142,15 @@ export function ChemicalSpace({ space, catalog }: { space: SpaceData; catalog: C
             Repair Lab.
           </p>
         </div>
+        <Button
+          variant="outline"
+          size="xs"
+          className="flex-none"
+          aria-pressed={paused}
+          onClick={() => setPaused((p) => !p)}
+        >
+          {paused ? "Rotate" : "Pause"}
+        </Button>
         <Button
           variant="outline"
           size="xs"

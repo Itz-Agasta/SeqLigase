@@ -20,6 +20,7 @@ import { MOMENT_PALETTE, readPalette } from "./colors";
 import { createDirector, type Playback } from "./director";
 import { Fallback2D } from "./fallback-2d";
 import { createRig, type Rig } from "./moment-rig";
+import { createFpsMonitor, PARTICLES } from "./quality";
 import { useWebGL } from "./use-webgl";
 
 gsap.ticker.lagSmoothing(0);
@@ -208,6 +209,7 @@ function Renderer({
   const get = useThree((s) => s.get);
   const size = useThree((s) => s.size);
   const composer = useRef<{ composer: EffectComposer; bloom: UnrealBloomPass } | null>(null);
+  const [monitor] = useState(() => createFpsMonitor(() => useLab.setState({ quality: "low" })));
 
   useEffect(() => {
     const { gl, scene, camera } = get();
@@ -230,6 +232,7 @@ function Renderer({
 
   useFrame((_, dt) => {
     const { gl, scene, camera, clock } = get();
+    monitor.frame(dt);
     const rig = rigRef.current;
     const persp = camera as THREE.PerspectiveCamera;
     if (rig) {
@@ -246,12 +249,12 @@ function Renderer({
       const { ox, oy } = framingFor(stageRef.current, 0, persp.fov);
       persp.setViewOffset(size.width, size.height, ox, oy, size.width, size.height);
     }
-    if (rig && composer.current) {
-      scene.background = SPACE;
+    if (rig) scene.background = SPACE;
+    if (rig && composer.current && useLab.getState().quality === "high") {
       composer.current.bloom.strength = rig.state.bloom;
       composer.current.composer.render(dt);
     } else {
-      scene.background = null;
+      if (!rig) scene.background = null;
       gl.render(scene, camera);
     }
   }, 1);
@@ -306,7 +309,7 @@ function MomentController({
       record,
       response: pending,
       palette,
-      particles: 2400,
+      particles: PARTICLES[lab.quality],
       fitDistance: framing.fit,
       pixelRatio: get().gl.getPixelRatio(),
     });
