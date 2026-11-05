@@ -22,7 +22,7 @@ export function TanimotoHistogram({ data }: { data: ExperimentsData["tanimoto"] 
         {({ width }) => {
           if (width <= 0) return null;
           const x = scaleLinear<number>({ domain: [0, 1], range: [M.l, width - M.r] });
-          const y = scaleSqrt<number>({ domain: [0, 1150], range: [H - M.b, M.t] });
+          const y = scaleSqrt<number>({ domain: [0, Math.max(...bins)], range: [H - M.b, M.t] });
           const bw = (width - M.l - M.r) / bins.length;
           return (
             <svg
@@ -32,7 +32,7 @@ export function TanimotoHistogram({ data }: { data: ExperimentsData["tanimoto"] 
               aria-label="Distribution of Tanimoto similarity"
               className="block"
             >
-              {[0, 100, 250, 500, 1000].map((t) => (
+              {[0, 100, 250, 500, 1000, 1500].map((t) => (
                 <g key={t}>
                   <line x1={M.l} x2={width - M.r} y1={y(t)} y2={y(t)} className="stroke-border" />
                   <text
