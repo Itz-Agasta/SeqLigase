@@ -10,6 +10,7 @@ function fakeClient(overrides: Partial<InferenceClient> = {}) {
     space: vi.fn(async () => ({})),
     reconstruct: vi.fn(),
     ...overrides,
+    notes: vi.fn(async () => ({})),
   } as unknown as InferenceClient;
 }
 

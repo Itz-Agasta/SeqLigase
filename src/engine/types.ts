@@ -144,4 +144,6 @@ export interface InferenceClient {
   reconstruct: (req: ReconstructRequest) => Promise<ReconstructResponse>;
   experiments: () => Promise<ExperimentsData>;
   space: () => Promise<SpaceData>;
+  notes: () => Promise<Record<string, string>>;
+  explain: (req: ReconstructRequest) => AsyncIterable<string>;
 }

@@ -9,6 +9,7 @@ export async function preloadAll(client: InferenceClient, importers: (() => Prom
   await Promise.all([
     client.experiments().catch(ignore),
     client.space().catch(ignore),
+    client.notes().catch(ignore),
     ...catalog.map((c) => client.molecule(c.id).catch(ignore)),
   ]);
 }

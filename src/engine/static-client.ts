@@ -24,7 +24,11 @@ function cached<T>(load: () => Promise<T>) {
   };
 }
 
-export function createStaticClient(base = "/data"): InferenceClient {
+const FIRST_CHUNK_MS = 8000;
+
+export function createStaticClient(base = "/data", api = "/api"): InferenceClient {
+  const notes = cached(() => fetchJson<Record<string, string>>(`${base}/notes.json`));
+  const written = new Map<string, string>();
   const molecules = new Map<string, () => Promise<MoleculeRecord>>();
   const molecule = (id: string) => {
     if (!molecules.has(id))
@@ -38,6 +42,53 @@ export function createStaticClient(base = "/data"): InferenceClient {
     catalog: cached(() => fetchJson<CatalogEntry[]>(`${base}/catalog.json`)),
     experiments: cached(() => fetchJson<ExperimentsData>(`${base}/experiments.json`)),
     molecule,
+    notes,
+    async *explain({ moleculeId, model, start, length }) {
+      const key = `${moleculeId}:${model}:${start}:${length}`;
+      const known = written.get(key);
+      if (known) {
+        yield known;
+        return;
+      }
+      const abort = new AbortController();
+      const timer = setTimeout(() => abort.abort(), FIRST_CHUNK_MS);
+      const query = new URLSearchParams({
+        mol: moleculeId,
+        model,
+        start: String(start),
+        len: String(length),
+      });
+      let text = "";
+      try {
+        const res = await fetch(`${api}/explain?${query}`, { signal: abort.signal });
+        // A static host answers unknown paths with the app's HTML, so check this really is a note.
+        const isText = res.headers.get("content-type")?.startsWith("text/plain");
+        if (!res.ok || !res.body || !isText) throw new Error(`Note failed (${res.status})`);
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          if (!chunk) continue;
+          clearTimeout(timer);
+          text += chunk;
+          yield chunk;
+        }
+      } catch (err) {
+        // Once text is on screen a drop is a real failure. Before that, the saved note stands in.
+        if (text) throw err;
+      } finally {
+        clearTimeout(timer);
+        abort.abort();
+      }
+      if (!text) {
+        text = (await notes())[key] ?? "";
+        if (!text) throw new Error(`No note for ${key}`);
+        yield text;
+      }
+      written.set(key, text);
+    },
     async reconstruct({ moleculeId, model, start, length }) {
       const run = (await molecule(moleculeId)).runs[`${model}:${start}:${length}`];
       if (!run) throw new Error(`No result for ${model} at ${start}, length ${length}`);

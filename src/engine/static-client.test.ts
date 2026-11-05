@@ -52,4 +52,49 @@ describe("static client", () => {
     expect(space.points[7]).toBe(8);
     expect(space.catalog.phenol).toBe(1);
   });
+
+  describe("explain", () => {
+    const req = { moleculeId: "phenol", model: "T5", start: 4, length: 2 } as const;
+    const collect = async (it: AsyncIterable<string>) => {
+      let text = "";
+      for await (const chunk of it) text += chunk;
+      return text;
+    };
+    const route = (api: () => Response, notes: Record<string, string> = {}) =>
+      stubFetch((url) => (url.includes("/api/") ? api() : Response.json(notes)));
+
+    it("streams the note and keeps it for the same run", async () => {
+      const fetch = route(() => new Response("A note."));
+      const client = createStaticClient();
+      expect(await collect(client.explain(req))).toBe("A note.");
+      expect(await collect(client.explain(req))).toBe("A note.");
+      expect(fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("uses the saved note when the function fails", async () => {
+      route(() => new Response("down", { status: 503 }), { "phenol:T5:4:2": "Saved note." });
+      expect(await collect(createStaticClient().explain(req))).toBe("Saved note.");
+    });
+
+    it("treats an empty stream as a failure", async () => {
+      route(() => new Response(""), { "phenol:T5:4:2": "Saved note." });
+      expect(await collect(createStaticClient().explain(req))).toBe("Saved note.");
+    });
+
+    it("doesn't show a static host's HTML as a note", async () => {
+      route(() => new Response("<!doctype html>", { headers: { "content-type": "text/html" } }), {
+        "phenol:T5:4:2": "Saved note.",
+      });
+      expect(await collect(createStaticClient().explain(req))).toBe("Saved note.");
+    });
+
+    it("rejects when there is no saved note, then can retry", async () => {
+      let ok = false;
+      route(() => (ok ? new Response("Live.") : new Response("down", { status: 503 })));
+      const client = createStaticClient();
+      await expect(collect(client.explain(req))).rejects.toThrow(/No note/);
+      ok = true;
+      expect(await collect(client.explain(req))).toBe("Live.");
+    });
+  });
 });

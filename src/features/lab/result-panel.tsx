@@ -1,9 +1,11 @@
 import { CircleCheck, TriangleAlert } from "lucide-react";
 import { useLab } from "@/state/lab-store";
+import { ExplainNote } from "./explain-note";
 import { verdictOf } from "./format";
 
 export function ResultPanel() {
   const response = useLab((s) => s.response);
+  const { moleculeId, model, start, length } = useLab((s) => s.selection);
   const verdict = response ? verdictOf(response) : null;
   const correct = response
     ? Math.round(response.token_accuracy * response.mask_positions.length)
@@ -51,6 +53,12 @@ export function ResultPanel() {
           {w}
         </p>
       ))}
+      {response ? (
+        <ExplainNote
+          key={`${moleculeId}:${model}:${start}:${length}`}
+          request={{ moleculeId, model, start, length }}
+        />
+      ) : null}
     </section>
   );
 }
