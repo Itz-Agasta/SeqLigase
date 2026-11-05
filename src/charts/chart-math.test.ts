@@ -41,22 +41,22 @@ describe("curveDomain", () => {
 
 describe("experiment data", () => {
   it("has histogram bins that sum to the valid count", () => {
-    expect(data.tanimoto.bins.reduce((a, b) => a + b, 0)).toBe(1944);
-    expect(data.tanimoto.valid).toBe(1944);
+    expect(data.tanimoto.bins.reduce((a, b) => a + b, 0)).toBe(1996);
+    expect(data.tanimoto.valid).toBe(1996);
   });
   it("uses one number for a metric across charts and table", () => {
     for (const split of [data.splits.random, data.splits.scaffold]) {
       const row = (model: string, mask = "15%") =>
         split.table.find((r) => r.model === model && r.mask === mask)!;
-      ["BiLSTM", "LSTM", "ChemBERTa", "T5"].forEach((model, i) => {
+      ["T5", "ChemBERTa", "BiLSTM", "LSTM"].forEach((model, i) => {
         expect(row(model).values[0]).toBe(split.compare.acc.values[i]);
         expect(row(model).values[1]).toBe(split.compare.top3.values[i]);
         expect(row(model).values[2]).toBe(split.compare.exact.values[i]);
         expect(row(model).values[3]).toBe(split.compare.valid.values[i]);
       });
-      expect(split.sweep.BiLSTM[0]).toBe(row("BiLSTM").values[0]);
-      expect(split.sweep.BiLSTM[1]).toBe(row("BiLSTM", "25%").values[0]);
-      expect(split.sweep.BiLSTM[2]).toBe(row("BiLSTM", "35%").values[0]);
+      expect(split.sweep.T5[0]).toBe(row("T5").values[0]);
+      expect(split.sweep.T5[1]).toBe(row("T5", "25%").values[0]);
+      expect(split.sweep.T5[2]).toBe(row("T5", "35%").values[0]);
     }
   });
   it("has confusion rows that sum to one", () => {

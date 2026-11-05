@@ -30,7 +30,7 @@ describe("lab URL state", () => {
 
   it("falls back on an unknown model, a negative seed and bad spans", () => {
     const s = parseLabSearch(new URLSearchParams("model=gpt&seed=-4&start=-1&len=9"), known);
-    expect(s.model).toBe("BiLSTM");
+    expect(s.model).toBe("T5");
     expect(s.seed).toBe(1337);
     expect(s.start).toBe(DEFAULT_SELECTION.start);
     expect(s.length).toBe(DEFAULT_SELECTION.length);

@@ -14,12 +14,12 @@ describe("summariseCompare", () => {
     expect(rows.map((r) => r.model)).toEqual(MODEL_IDS);
   });
   it("reports the verdict and tokens for each model", () => {
-    const [bilstm] = summariseCompare(aniline, 0, 2);
-    expect(bilstm.verdict.tone).toBe("warn");
-    expect(bilstm.tanimoto).toBe(0.375);
-    expect(bilstm.correct).toBe(1);
-    expect(bilstm.total).toBe(2);
-    expect(bilstm.tokens[0]).toEqual({ position: 0, token: "[O]", right: false });
+    const [first] = summariseCompare(aniline, 0, 2);
+    expect(first.verdict.tone).toBe("warn");
+    expect(first.tanimoto).toBe(0.375);
+    expect(first.correct).toBe(1);
+    expect(first.total).toBe(2);
+    expect(first.tokens[0]).toEqual({ position: 0, token: "[O]", right: false });
   });
   it("is empty for a span with no runs", () => {
     expect(summariseCompare(aniline, 90, 2)).toEqual([]);

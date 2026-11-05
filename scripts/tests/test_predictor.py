@@ -10,9 +10,15 @@ def stats():
 
 
 def test_phenol_pin():
-    p = predictor.predict(stats(), "Phenol", chem.tokens_of("Oc1ccccc1"), "BiLSTM", 4, 2)
+    p = predictor.predict(stats(), "Phenol", chem.tokens_of("Oc1ccccc1"), "T5", 4, 2)
     assert [p[4][0]["token"], p[5][0]["token"]] == ["[=C]", "[C]"]
     assert [p[4][0]["p"], p[5][0]["p"]] == [0.881, 0.843]
+
+
+def test_phenol_lstm_misses_the_pinned_mask():
+    tokens = chem.tokens_of("Oc1ccccc1")
+    p = predictor.predict(stats(), "Phenol", tokens, "LSTM", 4, 2)
+    assert p[4][0]["token"] != tokens[4] and p[5][0]["token"] != tokens[5]
 
 
 def test_aniline_pin_for_every_model():
@@ -53,6 +59,7 @@ def test_error_rates_order_models():
                     p = predictor.predict(st, name, t, model, start, length)
                     hits += [p[i][0]["token"] == t[i] for i in p]
         acc[model] = statistics.mean(hits)
-    assert acc["BiLSTM"] > acc["LSTM"] >= acc["ChemBERTa"] - 0.01 > acc["T5"]
-    assert 0.72 < acc["BiLSTM"] < 0.95
-    assert 0.5 < acc["T5"] < 0.8
+    assert acc["T5"] > acc["LSTM"] and acc["ChemBERTa"] > acc["LSTM"] and acc["BiLSTM"] > acc["LSTM"]
+    assert abs(acc["ChemBERTa"] - acc["BiLSTM"]) < 0.05
+    assert 0.72 < acc["T5"] < 0.95
+    assert 0.45 < acc["LSTM"] < 0.75

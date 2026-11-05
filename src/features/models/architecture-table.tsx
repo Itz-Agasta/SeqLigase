@@ -6,7 +6,8 @@ export function ArchitectureTable({ data }: { data: ExperimentsData }) {
     <section className="bg-surface flex-none px-[15px] pt-[13px] pb-1.5">
       <h3 className="text-[13px] font-medium">Architectures</h3>
       <p className="text-subtle mt-px mb-2 text-xs">
-        All predict over a {data.vocabSize}-token vocabulary, built from the training split.
+        The recurrent models predict over a {data.vocabSize}-token vocabulary built from the
+        training split. ChemBERTa and T5 keep their pretrained tokenizers.
       </p>
       <table className="w-full border-collapse text-[12.5px]">
         <thead>

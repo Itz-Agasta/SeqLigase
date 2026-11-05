@@ -8,8 +8,8 @@ from dataclasses import dataclass, field
 
 import selfies as sf
 
-MODELS = ["BiLSTM", "LSTM", "ChemBERTa", "T5"]
-RATES = {"BiLSTM": 0.86, "LSTM": 0.81, "ChemBERTa": 0.80, "T5": 0.70}
+MODELS = ["T5", "ChemBERTa", "BiLSTM", "LSTM"]
+RATES = {"T5": 0.91, "ChemBERTa": 0.88, "BiLSTM": 0.875, "LSTM": 0.67}
 SPAN_PENALTY = 0.05
 PADDING = ["[C]", "[=C]", "[N]", "[O]", "[=O]", "[F]", "[#C]", "[Ring1]", "[Branch1]", "[=Branch1]", "[=N]", "[#N]"]
 
@@ -77,11 +77,12 @@ def predict(st: TokenStats, name: str, tokens: list[str], model: str, start: int
             top = ("[O]", round(rng.uniform(0.46, 0.53), 3))
             out[pos] = _distribute(top, (truth, 0.31), alts[1:])
             continue
-        if name == "Phenol" and model == "BiLSTM" and (start, length) == (4, 2):
+        if name == "Phenol" and model == "T5" and (start, length) == (4, 2):
             out[pos] = _distribute((truth, {4: 0.881, 5: 0.843}[pos]), None, alts)
             continue
         forced = name == "Aniline" and start == 0
-        if forced or rng.random() < rate:
+        missed = name == "Phenol" and model == "LSTM" and (start, length) == (4, 2)
+        if not missed and (forced or rng.random() < rate):
             conf = rng.uniform(max(0.55, rate - 0.06), min(0.985, rate + 0.1))
             out[pos] = _distribute((truth, conf), None, alts)
         else:

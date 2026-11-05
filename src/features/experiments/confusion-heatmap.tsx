@@ -17,7 +17,7 @@ export function ConfusionHeatmap({ confusion }: { confusion: ExperimentsData["co
   const n = confusion.tokens.length;
   return (
     <ChartFrame
-      title="Token confusion, BiLSTM"
+      title="Token confusion, T5"
       note="Share of each true token predicted as each column. Rows sum to 100%."
       className="col-span-6 min-[1600px]:col-span-4"
     >

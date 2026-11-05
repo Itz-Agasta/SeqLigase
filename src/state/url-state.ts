@@ -10,7 +10,7 @@ export interface LabSelection {
 
 export const DEFAULT_SELECTION = {
   moleculeId: "phenol",
-  model: "BiLSTM",
+  model: "T5",
   start: 4,
   length: 2,
   seed: 1337,

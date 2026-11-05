@@ -22,7 +22,7 @@ const phenol = JSON.parse(
 const build = (view: "original" | "masked" | "reconstructed" | "overlay", shells = true) =>
   buildMolecule({
     record: phenol,
-    response: phenol.runs["BiLSTM:4:2"],
+    response: phenol.runs["T5:4:2"],
     view,
     mask: [4, 5],
     showHydrogens: true,

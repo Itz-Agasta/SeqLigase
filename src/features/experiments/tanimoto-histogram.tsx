@@ -14,7 +14,7 @@ export function TanimotoHistogram({ data }: { data: ExperimentsData["tanimoto"] 
   const bins = data.bins;
   return (
     <ChartFrame
-      title="Structural similarity, BiLSTM"
+      title="Structural similarity, T5"
       note={`Morgan Tanimoto to the original, over RDKit-valid outputs (n = ${data.valid.toLocaleString("en")} of ${data.total.toLocaleString("en")}). Square-root scale.`}
       className="col-span-6 min-[1600px]:col-span-4"
     >

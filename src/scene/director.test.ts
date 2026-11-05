@@ -23,7 +23,7 @@ const palette: ScenePalette = {
 const load = (id: string) =>
   JSON.parse(readFileSync(`public/data/molecules/${id}.json`, "utf8")) as MoleculeRecord;
 
-function setup(id = "phenol", key = "BiLSTM:4:2") {
+function setup(id = "phenol", key = "T5:4:2") {
   const record = load(id);
   const response = record.runs[key];
   const build = (view: "original" | "reconstructed") =>
