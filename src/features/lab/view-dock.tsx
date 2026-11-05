@@ -19,6 +19,7 @@ export function ViewDock() {
   const spin = useLab((s) => s.spin);
   const setView = useLab((s) => s.setView);
   const toggle = useLab((s) => s.toggleDisplay);
+  const camera = useLab((s) => s.commandCamera);
   return (
     <div
       data-chrome
@@ -38,6 +39,33 @@ export function ViewDock() {
           {v.label}
         </button>
       ))}
+      <span className="bg-border-strong mx-1 h-4 w-px" />
+      <button
+        type="button"
+        aria-label="Zoom out"
+        title="Zoom out (-)"
+        onClick={() => camera("out")}
+        className={BTN}
+      >
+        −
+      </button>
+      <button
+        type="button"
+        title="Fit the molecule (0)"
+        onClick={() => camera("fit")}
+        className={BTN}
+      >
+        Fit
+      </button>
+      <button
+        type="button"
+        aria-label="Zoom in"
+        title="Zoom in (+)"
+        onClick={() => camera("in")}
+        className={BTN}
+      >
+        +
+      </button>
       <span className="bg-border-strong mx-1 h-4 w-px" />
       <button
         type="button"

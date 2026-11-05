@@ -24,6 +24,7 @@ export interface LabState {
   hoveredToken: number | null;
   quality: QualityTier;
   showHydrogens: boolean;
+  cameraCommand: { kind: "in" | "out" | "fit"; id: number };
   spin: boolean;
   displayed: Record<number, DisplayedToken>;
   pendingRun: ReconstructResponse | null;
@@ -37,6 +38,7 @@ export interface LabState {
   setMask: (start: number, length: number) => void;
   setMaskPolicy: (policy: { ratio?: MaskRatio; maxSpan?: MaxSpan; seed?: number }) => void;
   setView: (view: LabView) => void;
+  commandCamera: (kind: "in" | "out" | "fit") => void;
   toggleDisplay: (key: "showHydrogens" | "spin") => void;
   setPhase: (phase: MomentPhase) => void;
   setHoveredToken: (token: number | null) => void;
@@ -62,6 +64,7 @@ export function createLabStore(api: InferenceClient) {
     hoveredToken: null,
     quality: typeof window === "undefined" ? "high" : qualityFromSearch(window.location.search),
     showHydrogens: true,
+    cameraCommand: { kind: "fit", id: 0 },
     spin: true,
     displayed: {},
     pendingRun: null,
@@ -123,6 +126,7 @@ export function createLabStore(api: InferenceClient) {
     },
 
     setView: (view) => set({ view }),
+    commandCamera: (kind) => set((s) => ({ cameraCommand: { kind, id: s.cameraCommand.id + 1 } })),
     toggleDisplay: (key) => set((s) => ({ [key]: !s[key] })),
     setPhase: (phase) => set({ phase }),
     setHoveredToken: (hoveredToken) => set({ hoveredToken }),

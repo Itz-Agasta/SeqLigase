@@ -12,6 +12,7 @@ import { useTheme } from "@/app/theme";
 import { useLab } from "@/state/lab-store";
 import {
   animatePulses,
+  applyLook,
   type AtomHandle,
   buildMolecule,
   type BuiltMolecule,
@@ -20,6 +21,7 @@ import { MOMENT_PALETTE, readPalette } from "./colors";
 import { createDirector, type Playback } from "./director";
 import { Fallback2D } from "./fallback-2d";
 import { createRig, type Rig } from "./moment-rig";
+import { stepZoom, zoomLook, ZOOM_LIMITS } from "./look";
 import { createFpsMonitor, PARTICLES } from "./quality";
 import { useWebGL } from "./use-webgl";
 
@@ -28,6 +30,7 @@ gsap.ticker.lagSmoothing(0);
 const REDUCED = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const SPACE = new THREE.Color(0x050507);
 const parentQuat = new THREE.Quaternion();
+const ORIGIN = new THREE.Vector3();
 
 interface Framing {
   ox: number;
@@ -95,6 +98,8 @@ function Molecule({
   const get = useThree((s) => s.get);
   const framed = useRef<string | null>(null);
   const highlighted = useRef<AtomHandle | null>(null);
+  const intro = useRef({ solid: 0 });
+  const cameraCommand = useLab((s) => s.cameraCommand);
 
   const built = useMemo<BuiltMolecule | null>(() => {
     if (!record || inMoment) return null;
@@ -119,8 +124,19 @@ function Molecule({
     camera.position.copy(dir.multiplyScalar(fit));
     camera.lookAt(0, 0, 0);
     framed.current = record.id;
+    const controls = get().controls as unknown as { target: THREE.Vector3 } | null;
+    controls?.target.set(0, 0, 0);
     if (REDUCED()) return;
-    // A new molecule assembles atom by atom.
+    // A new molecule assembles as solid spheres, then settles into its default look.
+    intro.current = { solid: 1 };
+    gsap.to(intro.current, { solid: 0, duration: 1.1, delay: 0.75, ease: "power2.inOut" });
+    built.shells.forEach((shell, i) => {
+      gsap.fromTo(
+        shell.group.scale,
+        { x: 0.001, y: 0.001, z: 0.001 },
+        { x: 1, y: 1, z: 1, duration: 0.55, delay: i * 0.03, ease: "back.out(1.6)" },
+      );
+    });
     built.atoms.forEach((a, i) => {
       gsap.fromTo(
         a.mesh.scale,
@@ -144,8 +160,64 @@ function Molecule({
     });
   }, [built, record, get, stageRef]);
 
+  useEffect(() => {
+    if (cameraCommand.id === 0 || !built) return;
+    const { camera, controls } = get() as unknown as {
+      camera: THREE.PerspectiveCamera;
+      controls: { target: THREE.Vector3 } | null;
+    };
+    const target = controls?.target ?? new THREE.Vector3();
+    const { fit } = framingFor(stageRef.current, built.radius, camera.fov);
+    const offset = camera.position.clone().sub(target);
+    if (cameraCommand.kind === "fit") {
+      const end = offset.clone().setLength(fit);
+      gsap.to(target, { x: 0, y: 0, z: 0, duration: 0.5, ease: "power2.inOut" });
+      gsap.to(camera.position, {
+        x: end.x,
+        y: end.y,
+        z: end.z,
+        duration: 0.5,
+        ease: "power2.inOut",
+      });
+      return;
+    }
+    const ratio = stepZoom(offset.length() / fit, cameraCommand.kind === "in" ? -1 : 1);
+    const end = target.clone().add(offset.setLength(ratio * fit));
+    gsap.to(camera.position, { x: end.x, y: end.y, z: end.z, duration: 0.35, ease: "power2.out" });
+    // Only commands move the camera here, and a command belongs to the molecule on screen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cameraCommand]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === "INPUT" || e.metaKey || e.ctrlKey) return;
+      const { commandCamera, phase } = useLab.getState();
+      if (phase !== "idle") return;
+      if (e.key === "+" || e.key === "=") commandCamera("in");
+      else if (e.key === "-") commandCamera("out");
+      else if (e.key === "0") commandCamera("fit");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   useFrame(({ camera, clock }) => {
     if (!built) return;
+    const persp = camera as THREE.PerspectiveCamera;
+    const controls = get().controls as unknown as {
+      target: THREE.Vector3;
+      minDistance: number;
+      maxDistance: number;
+    } | null;
+    const { fit } = framingFor(stageRef.current, built.radius, persp.fov);
+    if (controls) {
+      controls.minDistance = fit * ZOOM_LIMITS.min;
+      controls.maxDistance = fit * ZOOM_LIMITS.max;
+    }
+    const look = zoomLook(camera.position.distanceTo(controls?.target ?? ORIGIN) / fit);
+    look.solid = Math.max(look.solid, intro.current.solid);
+    applyLook(built, look);
     built.group.getWorldQuaternion(parentQuat).invert();
     for (const b of built.billboards) b.quaternion.copy(parentQuat).multiply(camera.quaternion);
     if (!REDUCED()) animatePulses(built, clock.elapsedTime);
@@ -193,6 +265,7 @@ function Controls() {
       makeDefault
       enabled={idle}
       enablePan={false}
+      zoomToCursor
       enableDamping
       dampingFactor={0.08}
       autoRotate={idle && spin && hovered === null && !REDUCED()}
@@ -308,6 +381,8 @@ function MomentController({
       before.radius,
       (camera as THREE.PerspectiveCamera).fov,
     );
+    const distance = camera.position.distanceTo(ORIGIN);
+    applyLook(before, zoomLook(distance / framing.fit));
     const rig = createRig({
       scene,
       before,

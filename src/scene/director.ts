@@ -1,7 +1,8 @@
 import gsap from "gsap";
 import * as THREE from "three";
 import type { MoleculeRecord, ReconstructResponse, TokenCandidate } from "@/engine/types";
-import type { AtomHandle, BuiltMolecule } from "./build-molecule";
+import { applyLook, type AtomHandle, type BuiltMolecule } from "./build-molecule";
+import { DEFAULT_LOOK, HIDDEN_LOOK } from "./look";
 import type { Rig } from "./moment-rig";
 
 export const PHASE_TIMES = { damage: 2, reading: 3.6, ligation: 2.6, verify: 1.4 };
@@ -92,6 +93,7 @@ export function createDirector(input: DirectorInput) {
       onDisplay(lockedAll());
       rig.before.group.visible = false;
       rig.after.group.visible = true;
+      applyLook(rig.after, DEFAULT_LOOK);
       onSwap();
       current = { finished, skip: done };
       function done() {
@@ -139,6 +141,10 @@ export function createDirector(input: DirectorInput) {
 
     // Damage
     tl.call(() => onPhase("damage"), undefined, 0);
+    // The shells fall away first, so everyone can see the hole being made.
+    tl.to(before.shellUniforms.uAlpha, { value: 0, duration: 0.3 }, 0);
+    tl.to(before.shellUniforms.uSolid, { value: 0, duration: 0.3 }, 0);
+    tl.call(() => applyLook(before, HIDDEN_LOOK), undefined, 0.32);
     tl.to(dust.uniforms.uB, { value: 0.5, duration: 1.2 }, 0);
     tl.to(
       cs,
@@ -485,6 +491,35 @@ export function createDirector(input: DirectorInput) {
       T.ligation + 1.05,
     );
 
+    // The surface heals outward from the repair.
+    const healAt = firstHit + 1;
+    const origin = clouds[0]?.points.position ?? new THREE.Vector3();
+    const byDistance = [...after.shells].sort(
+      (a, b) => a.position.distanceTo(origin) - b.position.distanceTo(origin),
+    );
+    tl.call(
+      () => {
+        after.shells.forEach((shell) => {
+          shell.group.visible = true;
+          shell.group.scale.setScalar(0.2);
+        });
+      },
+      undefined,
+      healAt - 0.01,
+    );
+    tl.to(
+      after.shellUniforms.uAlpha,
+      { value: DEFAULT_LOOK.shell, duration: 0.9, ease: "power2.out" },
+      healAt,
+    );
+    byDistance.forEach((shell, i) => {
+      tl.to(
+        shell.group.scale,
+        { x: 1, y: 1, z: 1, duration: 0.7, ease: "back.out(1.6)" },
+        healAt + i * 0.035,
+      );
+    });
+
     // Verify
     tl.call(
       () => {
@@ -501,6 +536,17 @@ export function createDirector(input: DirectorInput) {
     tl.fromTo(scan.material, { opacity: 0 }, { opacity: 0.9, duration: 0.15 }, T.verify);
     tl.to(scan.position, { y: -extent, duration: 1, ease: "sine.inOut" }, T.verify);
     tl.to(scan.material, { opacity: 0, duration: 0.15 }, T.verify + 0.9);
+    tl.to(
+      cs,
+      {
+        x: endDir.x * framing.fitDistance,
+        y: endDir.y * framing.fitDistance,
+        z: endDir.z * framing.fitDistance,
+        duration: 0.7,
+        ease: "power2.inOut",
+      },
+      end - 0.7,
+    );
     checks.forEach((_, i) =>
       tl.call(() => onChecks(checks.slice(0, i + 1)), undefined, T.verify + 0.2 + i * 0.3),
     );

@@ -1,7 +1,8 @@
 import * as THREE from "three";
 import type { MoleculeRecord, ReconstructResponse } from "@/engine/types";
-import type { AtomHandle, BuiltMolecule } from "./build-molecule";
+import { applyLook, type AtomHandle, type BuiltMolecule } from "./build-molecule";
 import type { ScenePalette } from "./colors";
+import { HIDDEN_LOOK } from "./look";
 
 export interface Source {
   atomIndex: number | null;
@@ -544,6 +545,7 @@ export function createRig({
     scan,
   );
 
+  applyLook(after, HIDDEN_LOOK);
   after.group.visible = false;
   after.pulses.forEach((p) => (p.visible = false));
   scene.add(dust.points, before.group, after.group, group);

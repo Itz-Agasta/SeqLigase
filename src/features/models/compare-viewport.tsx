@@ -45,6 +45,7 @@ function Scene({
       view: stage === "done" ? "reconstructed" : "masked",
       mask,
       showHydrogens: true,
+      shells: false,
       palette: PALETTE(),
     });
   }, [record, response, mask, stage]);
@@ -68,6 +69,7 @@ function Scene({
       view: "original",
       mask,
       showHydrogens: true,
+      shells: false,
       palette,
     });
     const after = buildMolecule({
@@ -76,6 +78,7 @@ function Scene({
       view: "reconstructed",
       mask,
       showHydrogens: true,
+      shells: false,
       palette,
     });
     const fit = fitFor(

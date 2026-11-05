@@ -7,6 +7,7 @@ import type { MoleculeRecord } from "@/engine/types";
 import { buildMolecule } from "./build-molecule";
 import type { ScenePalette } from "./colors";
 import { createDirector, PHASE_TIMES } from "./director";
+import { DEFAULT_LOOK } from "./look";
 import { createRig, findPulsePaths, findSources } from "./moment-rig";
 
 const palette: ScenePalette = {
@@ -89,6 +90,28 @@ describe("director", () => {
     }).play().finished;
     expect(phases).toEqual(["damage", "reading", "ligation", "verify"]);
     expect(swap).toHaveBeenCalledTimes(1);
+  });
+
+  it("fades the shells away, then heals them back after the repair", async () => {
+    const { rig, camera, callbacks, response, record } = setup();
+    const seen: number[] = [];
+    const run = createDirector({
+      rig,
+      camera,
+      response,
+      record,
+      reducedMotion: false,
+      ...callbacks,
+      onPhase: (p: string) => {
+        if (p === "reading") seen.push(rig.before.shellUniforms.uAlpha.value as number);
+        callbacks.onPhase(p);
+      },
+    }).play();
+    await run.finished;
+    expect(seen[0]).toBeLessThan(0.02);
+    expect(rig.after.shellUniforms.uAlpha.value).toBeCloseTo(DEFAULT_LOOK.shell, 2);
+    expect(rig.after.shellUniforms.uSolid.value).toBe(0);
+    for (const shell of rig.after.shells) expect(shell.group.scale.x).toBeCloseTo(1, 2);
   });
 
   it("ends every masked token locked on the predicted token", async () => {

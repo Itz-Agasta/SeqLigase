@@ -4,6 +4,17 @@ import type { LabView } from "@/state/lab-store";
 import { candidateOf } from "./candidate";
 import type { ScenePalette } from "./colors";
 import { bondSegments, centroid, position, type Vec3 } from "./geometry";
+import {
+  type AoUniforms,
+  applyIllustrative,
+  createAoUniforms,
+  createShellMaterial,
+  createShellPrepass,
+  createShellUniforms,
+  MAX_OCCLUDERS,
+  type ShellUniforms,
+} from "./illustrative";
+import { bondLength, DEFAULT_LOOK, type Look, vdwRadius } from "./look";
 
 export interface AtomHandle {
   mesh: THREE.Mesh<THREE.BufferGeometry, THREE.MeshPhysicalMaterial | THREE.MeshBasicMaterial>;
@@ -23,9 +34,22 @@ export interface HalfHandle {
   bond: number;
 }
 
+export interface ShellHandle {
+  group: THREE.Group;
+  index: number;
+  radius: number;
+  position: THREE.Vector3;
+}
+
 export interface BuiltMolecule {
   group: THREE.Group;
   atoms: AtomHandle[];
+  shells: ShellHandle[];
+  shellUniforms: ShellUniforms;
+  aoUniforms: AoUniforms;
+  heteroLabels: THREE.Sprite[];
+  carbonLabels: THREE.Sprite[];
+  lengthLabels: THREE.Sprite[];
   halves: HalfHandle[];
   billboards: THREE.Object3D[];
   pulses: THREE.Object3D[];
@@ -41,6 +65,8 @@ export interface BuildInput {
   mask: number[];
   showHydrogens: boolean;
   palette: ScenePalette;
+  /** Translucent van der Waals shells. Off for small viewports. */
+  shells?: boolean;
 }
 
 const SPHERE = new THREE.SphereGeometry(1, 48, 32);
@@ -53,15 +79,22 @@ export function atomRadius(el: string) {
   return el === "C" ? 0.34 : 0.36;
 }
 
-const physical = (color: string, extra: THREE.MeshPhysicalMaterialParameters = {}) =>
-  new THREE.MeshPhysicalMaterial({
-    color,
-    roughness: 0.36,
-    metalness: 0,
-    clearcoat: 0.35,
-    clearcoatRoughness: 0.4,
-    ...extra,
-  });
+const physical = (
+  color: string,
+  ao: AoUniforms,
+  extra: THREE.MeshPhysicalMaterialParameters = {},
+) =>
+  applyIllustrative(
+    new THREE.MeshPhysicalMaterial({
+      color,
+      roughness: 0.48,
+      metalness: 0,
+      clearcoat: 0.15,
+      clearcoatRoughness: 0.5,
+      ...extra,
+    }),
+    ao,
+  );
 
 const textures = new Map<string, THREE.CanvasTexture>();
 function glyph(text: string, color: string) {
@@ -100,6 +133,43 @@ function label(text: string, color: string, at: THREE.Vector3, size: number) {
   return sprite;
 }
 
+const lengthTextures = new Map<string, THREE.CanvasTexture>();
+function lengthLabel(text: string) {
+  let texture = lengthTextures.get(text);
+  if (!texture) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 192;
+    canvas.height = 64;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.fillStyle = "rgba(10, 10, 11, 0.94)";
+      ctx.beginPath();
+      ctx.roundRect(4, 8, 184, 48, 12);
+      ctx.fill();
+      ctx.font = "500 30px 'Geist Mono Variable', monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#ededef";
+      ctx.fillText(text, 96, 33);
+    }
+    texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    lengthTextures.set(text, texture);
+  }
+  const sprite = new THREE.Sprite(
+    new THREE.SpriteMaterial({
+      map: texture,
+      depthTest: false,
+      transparent: true,
+      toneMapped: false,
+      sizeAttenuation: false,
+    }),
+  );
+  sprite.scale.set(0.075, 0.025, 1);
+  sprite.renderOrder = 7;
+  return sprite;
+}
+
 function ring(at: THREE.Vector3, radius: number, color: string, dashed: boolean, opacity: number) {
   const points = Array.from({ length: 73 }, (_, i) => {
     const t = (i / 72) * Math.PI * 2;
@@ -126,6 +196,7 @@ export function buildMolecule({
   mask,
   showHydrogens,
   palette,
+  shells: wantShells = true,
 }: BuildInput): BuiltMolecule {
   const predicted = view === "reconstructed" || view === "overlay";
   const candidate = predicted ? candidateOf(record, response) : null;
@@ -136,6 +207,12 @@ export function buildMolecule({
   const elementColor = (el: string) => palette[el as keyof ScenePalette] ?? palette.C;
 
   const group = new THREE.Group();
+  const aoUniforms = createAoUniforms();
+  const shellUniforms = createShellUniforms();
+  const shells: ShellHandle[] = [];
+  const heteroLabels: THREE.Sprite[] = [];
+  const carbonLabels: THREE.Sprite[] = [];
+  const lengthLabels: THREE.Sprite[] = [];
   const atoms: AtomHandle[] = [];
   const halves: HalfHandle[] = [];
   const billboards: THREE.Object3D[] = [];
@@ -184,7 +261,7 @@ export function buildMolecule({
       : s.kind === "inner"
         ? palette.muted
         : colorOf(s.owner);
-    const material = physical(color, {
+    const material = physical(color, aoUniforms, {
       emissive: new THREE.Color(palette.brand),
       emissiveIntensity: repairedBond ? 0.18 : 0,
       ...(touchesUnknown ? { transparent: true, opacity: 0.16, depthWrite: false } : {}),
@@ -241,13 +318,40 @@ export function buildMolecule({
     handle(
       new THREE.Mesh(
         SPHERE,
-        physical(color, {
+        physical(color, aoUniforms, {
           emissive: new THREE.Color(infill ? color : palette.brand),
           emissiveIntensity: infill ? 0.18 : 0,
         }),
       ),
     );
-    if (a.el !== "H" && a.el !== "C") group.add(label(a.el, "#ffffff", at, 0.3));
+    if (a.el !== "H") {
+      const sprite = label(a.el, "#ffffff", at, a.el === "C" ? 0.26 : 0.3);
+      (a.el === "C" ? carbonLabels : heteroLabels).push(sprite);
+      group.add(sprite);
+    }
+    if (wantShells && view !== "overlay") {
+      const handle = new THREE.Group();
+      handle.position.copy(at);
+      const r = vdwRadius(a.el);
+      const prepass = new THREE.Mesh(SPHERE, createShellPrepass());
+      const surface = new THREE.Mesh(
+        SPHERE,
+        createShellMaterial(color, shellUniforms, aoUniforms, atoms.length - 1),
+      );
+      prepass.scale.setScalar(r);
+      surface.scale.setScalar(r);
+      prepass.renderOrder = 1;
+      surface.renderOrder = 2;
+      surface.userData.atomIndex = i;
+      prepass.raycast = () => undefined;
+      surface.raycast = (raycaster, hits) => {
+        if (shellUniforms.uSolid.value > 0.5)
+          THREE.Mesh.prototype.raycast.call(surface, raycaster, hits);
+      };
+      handle.add(prepass, surface);
+      group.add(handle);
+      shells.push({ group: handle, index: i, radius: r, position: at });
+    }
     if (infill && view === "reconstructed") {
       const pulse = ring(at, radius * 1.42, color, false, 0.75);
       group.add(pulse);
@@ -292,10 +396,35 @@ export function buildMolecule({
     });
   }
 
-  const radius = Math.max(1.5, ...atoms.map((a) => a.position.length())) + 0.7;
-  return {
+  atoms.slice(0, MAX_OCCLUDERS).forEach((a, i) => {
+    aoUniforms.uSpheres.value[i].set(a.position.x, a.position.y, a.position.z, a.radius);
+  });
+  atoms.slice(0, MAX_OCCLUDERS).forEach((a, i) => {
+    aoUniforms.uVdw.value[i] = vdwRadius(a.el);
+  });
+  aoUniforms.uCount.value = Math.min(atoms.length, MAX_OCCLUDERS);
+
+  structure.bonds.forEach(({ a, b }) => {
+    if (structure.atoms[a].el === "H" || structure.atoms[b].el === "H") return;
+    if (hidden.has(a) || hidden.has(b)) return;
+    const from = position(structure.atoms[a]);
+    const to = position(structure.atoms[b]);
+    const sprite = lengthLabel(bondLength(from, to));
+    sprite.position.copy(toScene(from).add(toScene(to)).multiplyScalar(0.5));
+    lengthLabels.push(sprite);
+    group.add(sprite);
+  });
+
+  const radius = Math.max(1.5, ...atoms.map((a) => a.position.length())) + 1.2;
+  const built: BuiltMolecule = {
     group,
     atoms,
+    shells,
+    shellUniforms,
+    aoUniforms,
+    heteroLabels,
+    carbonLabels,
+    lengthLabels,
     halves,
     billboards,
     pulses,
@@ -309,6 +438,30 @@ export function buildMolecule({
       });
     },
   };
+  applyLook(built, DEFAULT_LOOK);
+  return built;
+}
+
+/** Applies a look, and grows occlusion from the atoms to their full size as they turn solid. */
+export function applyLook(built: BuiltMolecule, look: Look) {
+  built.shellUniforms.uSolid.value = look.solid;
+  built.shellUniforms.uAlpha.value = look.shell;
+  const showShells = look.shell > 0.001 || look.solid > 0.001;
+  for (const s of built.shells) s.group.visible = showShells;
+  built.atoms.forEach((a, i) => {
+    const sphere = built.aoUniforms.uSpheres.value[i];
+    if (!sphere) return;
+    sphere.w = a.radius + (vdwRadius(a.el) * 0.92 - a.radius) * look.solid;
+  });
+  for (const l of built.heteroLabels) l.material.opacity = 1 - look.solid;
+  for (const l of built.carbonLabels) {
+    l.material.opacity = look.labels;
+    l.visible = look.labels > 0.01;
+  }
+  for (const l of built.lengthLabels) {
+    l.material.opacity = look.lengths;
+    l.visible = look.lengths > 0.01;
+  }
 }
 
 export function animatePulses(built: BuiltMolecule, time: number) {
