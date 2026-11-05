@@ -17,19 +17,30 @@ COMPARE = {
     "valid": {"label": "Validity", "note": "RDKit-valid decoded candidates over all generated candidates, 95% CI.", "values": [0.998, 0.996, 0.995, 0.990], "domain": [0.9, 1]},
 }
 SWEEP = {"T5": [0.905, 0.868, 0.816], "ChemBERTa": [0.874, 0.817, 0.746], "BiLSTM": [0.868, 0.811, 0.741], "LSTM": [0.664, 0.603, 0.532]}
-CONFUSION_TOKENS = ["[C]", "[=C]", "[N]", "[O]", "[=O]", "[F]", "[Ring1]", "[Branch1]"]
+# The eight most frequent tokens in the sample, checked against it in build().
+CONFUSION_TOKENS = ["[C]", "[=C]", "[N]", "[O]", "[=O]", "[Ring1]", "[Branch1]", "[=Branch1]"]
 CONFUSION = [
-    [0.925, 0.039, 0.012, 0.009, 0.003, 0.001, 0.006, 0.005],
-    [0.072, 0.895, 0.008, 0.005, 0.008, 0.001, 0.007, 0.004],
-    [0.059, 0.008, 0.875, 0.036, 0.005, 0.002, 0.008, 0.007],
-    [0.034, 0.004, 0.036, 0.885, 0.03, 0.002, 0.004, 0.005],
-    [0.008, 0.007, 0.005, 0.058, 0.915, 0.001, 0.003, 0.003],
-    [0.04, 0.004, 0.008, 0.034, 0.003, 0.905, 0.003, 0.003],
-    [0.01, 0.004, 0.003, 0.001, 0.001, 0.001, 0.91, 0.07],
-    [0.013, 0.006, 0.004, 0.003, 0.001, 0.001, 0.062, 0.91],
+    [0.925, 0.039, 0.012, 0.009, 0.003, 0.006, 0.005, 0.001],
+    [0.072, 0.895, 0.008, 0.005, 0.008, 0.007, 0.004, 0.001],
+    [0.059, 0.008, 0.875, 0.036, 0.005, 0.008, 0.007, 0.002],
+    [0.034, 0.004, 0.036, 0.885, 0.030, 0.004, 0.005, 0.002],
+    [0.008, 0.007, 0.005, 0.058, 0.915, 0.003, 0.003, 0.001],
+    [0.010, 0.004, 0.003, 0.001, 0.001, 0.910, 0.070, 0.001],
+    [0.013, 0.006, 0.004, 0.003, 0.001, 0.062, 0.885, 0.026],
+    [0.011, 0.004, 0.003, 0.003, 0.003, 0.008, 0.067, 0.901],
 ]
-HISTOGRAM = [5, 7, 10, 13, 15, 19, 25, 28, 34, 39, 42, 47, 54, 58, 1600]
+# The last bin holds every exact recovery, so it matches the T5 Exact metric on the random split.
+HISTOGRAM = [5, 7, 10, 13, 15, 19, 25, 28, 33, 38, 41, 46, 53, 57, 1606]
+TEST_MOLECULES = 2000
 SCAFFOLD_PENALTY = 0.05
+
+
+def _wilson(p: float, n: int = TEST_MOLECULES, z: float = 1.96) -> tuple[float, float]:
+    """95% Wilson interval, which stays inside 0 to 1 and narrows near the ends."""
+    d = 1 + z * z / n
+    mid = (p + z * z / (2 * n)) / d
+    half = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d
+    return round(max(0, mid - half), 3), round(min(1, mid + half), 3)
 
 
 def _curves(split: str) -> dict:
@@ -52,7 +63,12 @@ def _curves(split: str) -> dict:
 
 def _compare(split: str) -> dict:
     pen = SCAFFOLD_PENALTY if split == "scaffold" else 0
-    return {k: {**v, "values": [round(x - (0 if k == "valid" else pen), 3) for x in v["values"]], "ci": [0.002, 0.003, 0.003, 0.004] if k == "valid" else [0.013, 0.013, 0.013, 0.019]} for k, v in COMPARE.items()}
+    out = {}
+    for k, v in COMPARE.items():
+        values = [round(x - (0 if k == "valid" else pen), 3) for x in v["values"]]
+        bounds = [_wilson(x) for x in values]
+        out[k] = {**v, "values": values, "lo": [b[0] for b in bounds], "hi": [b[1] for b in bounds]}
+    return out
 
 
 def _table(split: str) -> list[dict]:
@@ -101,7 +117,10 @@ def _t5_params(vocab: int, layers: int = 6, d: int = 512, ffn: int = 2048, heads
     return embeddings + layers * (encoder + decoder) + 2 * buckets * heads + 2 * d
 
 
-def build(vocab_size: int, funnel: list[dict], sample: int) -> dict:
+def build(vocab_size: int, funnel: list[dict], sample: int, token_counts: dict[str, int]) -> dict:
+    ranked = sorted(token_counts, key=token_counts.get, reverse=True)
+    if set(ranked[: len(CONFUSION_TOKENS)]) != set(CONFUSION_TOKENS):
+        raise ValueError(f"Confusion tokens aren't the most frequent: {ranked[: len(CONFUSION_TOKENS)]}")
     architectures = [
         {"id": "T5", "layers": "8 + 8 × T5 encoder-decoder, 512, MolT5-small", "checkpoint": "molt5-small-qm9", "params": _t5_params(32128, layers=8, ffn=1024, heads=6, gated=True, tied=False)},
         {"id": "ChemBERTa", "layers": "6 × RoBERTa encoder, 768, ChemBERTa-zinc-base", "checkpoint": "chemberta-zinc-base-qm9", "params": _roberta_params(767, layers=6, positions=514, types=1)},
@@ -114,6 +133,6 @@ def build(vocab_size: int, funnel: list[dict], sample: int) -> dict:
         "splits": {s: {"curves": _curves(s), "compare": _compare(s), "table": _table(s), "sweep": {m: [round(v - (SCAFFOLD_PENALTY if s == "scaffold" else 0), 3) for v in vals] for m, vals in SWEEP.items()}} for s in ("random", "scaffold")},
         "maskRatios": [15, 25, 35],
         "confusion": {"tokens": CONFUSION_TOKENS, "matrix": CONFUSION},
-        "tanimoto": {"bins": HISTOGRAM, "valid": sum(HISTOGRAM), "total": 2000},
+        "tanimoto": {"bins": HISTOGRAM, "valid": sum(HISTOGRAM), "total": TEST_MOLECULES},
         "funnel": funnel + [{"step": "Training set", "count": sample}],
     }

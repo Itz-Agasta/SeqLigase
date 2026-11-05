@@ -6,7 +6,7 @@ import { useTip } from "@/charts/tip-context";
 import { TipRow } from "@/charts/tooltip";
 import type { ExperimentsData } from "@/engine/types";
 
-const LEFT = 70;
+const LEFT = 78;
 const TOP = 22;
 const short = (t: string) => t.replace("Branch", "Br").replace("Ring", "Rg");
 
@@ -18,7 +18,7 @@ export function ConfusionHeatmap({ confusion }: { confusion: ExperimentsData["co
   return (
     <ChartFrame
       title="Token confusion, T5"
-      note="Share of each true token predicted as each column. Rows sum to 100%."
+      note="Share of each true token predicted as each column, among the eight most frequent tokens. Rows sum to 100%."
       className="col-span-6 min-[1600px]:col-span-4"
     >
       <ChartWidth>

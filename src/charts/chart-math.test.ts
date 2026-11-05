@@ -59,6 +59,26 @@ describe("experiment data", () => {
       expect(split.sweep.T5[2]).toBe(row("T5", "35%").values[0]);
     }
   });
+  it("has confidence intervals that contain the value and stay inside 0 to 1", () => {
+    for (const split of [data.splits.random, data.splits.scaffold])
+      for (const c of Object.values(split.compare))
+        c.values.forEach((v, i) => {
+          expect(c.lo[i]).toBeGreaterThanOrEqual(0);
+          expect(c.hi[i]).toBeLessThanOrEqual(1);
+          expect(c.lo[i]).toBeLessThanOrEqual(v);
+          expect(c.hi[i]).toBeGreaterThanOrEqual(v);
+        });
+  });
+  it("narrows the interval as a value nears 1", () => {
+    const { values, lo, hi } = data.splits.random.compare.top3;
+    expect(values[0]).toBeGreaterThan(values[3]);
+    expect(hi[0] - lo[0]).toBeLessThan(hi[3] - lo[3]);
+  });
+  it("keeps every exact recovery in the top similarity bin", () => {
+    const { bins, total } = data.tanimoto;
+    const exact = Math.round(data.splits.random.compare.exact.values[0] * total);
+    expect(bins[bins.length - 1]).toBeGreaterThanOrEqual(exact);
+  });
   it("has confusion rows that sum to one", () => {
     for (const row of data.confusion.matrix)
       expect(row.reduce((a, b) => a + b, 0)).toBeCloseTo(1, 2);

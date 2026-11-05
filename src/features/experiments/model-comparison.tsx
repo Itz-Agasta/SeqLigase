@@ -61,7 +61,6 @@ export function ModelComparison({ split }: { split: SplitData }) {
               ))}
               {MODEL_IDS.map((m, i) => {
                 const v = c.values[i];
-                const ci = c.ci[i];
                 const cy = 4 + ROW * i + ROW / 2;
                 return (
                   <g key={m}>
@@ -69,8 +68,8 @@ export function ModelComparison({ split }: { split: SplitData }) {
                       {m}
                     </text>
                     <line
-                      x1={x(v - ci)}
-                      x2={x(v + ci)}
+                      x1={x(c.lo[i])}
+                      x2={x(c.hi[i])}
                       y1={cy}
                       y2={cy}
                       stroke={modelColor(m)}
@@ -107,7 +106,7 @@ export function ModelComparison({ split }: { split: SplitData }) {
                             <TipRow label={c.label} value={v.toFixed(3)} />
                             <TipRow
                               label="95% CI"
-                              value={`${(v - ci).toFixed(3)} to ${(v + ci).toFixed(3)}`}
+                              value={`${c.lo[i].toFixed(3)} to ${c.hi[i].toFixed(3)}`}
                             />
                             <TipRow label="Seeds" value="3" />
                           </>,

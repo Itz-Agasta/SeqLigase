@@ -107,7 +107,14 @@ export interface SplitData {
   curves: Record<ModelId, { acc: CurvePoint[]; loss: CurvePoint[] }>;
   compare: Record<
     CompareMetric,
-    { label: string; note: string; values: number[]; ci: number[]; domain: [number, number] }
+    {
+      label: string;
+      note: string;
+      values: number[];
+      lo: number[];
+      hi: number[];
+      domain: [number, number];
+    }
   >;
   table: { id: string; input: string; model: string; mask: string; values: (number | null)[] }[];
   sweep: Record<ModelId, number[]>;
