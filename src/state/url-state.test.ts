@@ -16,10 +16,10 @@ describe("lab URL state", () => {
 
   it("reads a full selection", () => {
     const s = parseLabSearch(
-      new URLSearchParams("mol=aniline&model=gru&start=0&len=3&seed=9"),
+      new URLSearchParams("mol=aniline&model=chembert&start=0&len=3&seed=9"),
       known,
     );
-    expect(s).toEqual({ moleculeId: "aniline", model: "GRU", start: 0, length: 3, seed: 9 });
+    expect(s).toEqual({ moleculeId: "aniline", model: "ChemBERT", start: 0, length: 3, seed: 9 });
   });
 
   it("falls back on an unknown molecule", () => {
@@ -52,13 +52,13 @@ describe("lab URL state", () => {
   });
 
   it("round-trips", () => {
-    const sel = { moleculeId: "aniline", model: "RNN", start: 2, length: 1, seed: 5 } as const;
+    const sel = { moleculeId: "aniline", model: "T5", start: 2, length: 1, seed: 5 } as const;
     expect(parseLabSearch(new URLSearchParams(serializeLabSearch(sel)), known)).toEqual(sel);
   });
 });
 
 describe("syncSearch", () => {
-  const sel = { moleculeId: "aniline", model: "RNN", start: 2, length: 1, seed: 5 } as const;
+  const sel = { moleculeId: "aniline", model: "T5", start: 2, length: 1, seed: 5 } as const;
   it("keeps a quality setting from the current URL", () => {
     expect(new URLSearchParams(syncSearch(sel, "?quality=low&mol=phenol")).get("quality")).toBe(
       "low",

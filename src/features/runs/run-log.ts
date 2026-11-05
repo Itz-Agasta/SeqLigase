@@ -1,4 +1,4 @@
-import type { ModelId } from "@/engine/types";
+import { MODEL_IDS, type ModelId } from "@/engine/types";
 
 export interface RunEntry {
   id: string;
@@ -20,7 +20,9 @@ const KEY = "seqligase-runs";
 function read(): RunEntry[] {
   try {
     const parsed: unknown = JSON.parse(localStorage.getItem(KEY) ?? "[]");
-    return Array.isArray(parsed) ? (parsed as RunEntry[]) : [];
+    return Array.isArray(parsed)
+      ? (parsed as RunEntry[]).filter((r) => MODEL_IDS.includes(r.model))
+      : [];
   } catch {
     return [];
   }

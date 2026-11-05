@@ -1,5 +1,5 @@
-export type ModelId = "BiLSTM" | "LSTM" | "GRU" | "RNN";
-export const MODEL_IDS: ModelId[] = ["BiLSTM", "LSTM", "GRU", "RNN"];
+export type ModelId = "BiLSTM" | "LSTM" | "ChemBERT" | "T5";
+export const MODEL_IDS: ModelId[] = ["BiLSTM", "LSTM", "ChemBERT", "T5"];
 
 export type TokenKind = "atom" | "ring" | "branch" | "size";
 

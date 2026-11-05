@@ -36,7 +36,7 @@ describe("static client", () => {
     stubFetch(() => Response.json(record));
     const client = createStaticClient();
     await expect(
-      client.reconstruct({ moleculeId: "phenol", model: "RNN", start: 0, length: 3 }),
+      client.reconstruct({ moleculeId: "phenol", model: "T5", start: 0, length: 3 }),
     ).rejects.toThrow();
   });
 

@@ -54,8 +54,8 @@
   /* Model identity */
   --chart-1: #4f5bd5; /* BiLSTM */
   --chart-2: #b5651d; /* LSTM */
-  --chart-3: #0f8f80; /* GRU */
-  --chart-4: #9a45c9; /* RNN */
+  --chart-3: #0f8f80; /* ChemBERT */
+  --chart-4: #9a45c9; /* T5 */
   --chart-5: #74757c;
 }
 
@@ -104,8 +104,8 @@
 
   --chart-1: #6f7cf0; /* BiLSTM */
   --chart-2: #c0802c; /* LSTM */
-  --chart-3: #1aa08f; /* GRU */
-  --chart-4: #b566e0; /* RNN */
+  --chart-3: #1aa08f; /* ChemBERT */
+  --chart-4: #b566e0; /* T5 */
   --chart-5: #797b82;
 }
 

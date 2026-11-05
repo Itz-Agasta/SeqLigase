@@ -3,14 +3,14 @@ Parameter counts are computed from the architecture, and the funnel is measured.
 import math
 import random
 
-MODELS = [("BiLSTM", 0.865, 5.6, 0.42), ("LSTM", 0.815, 6.6, 0.56), ("GRU", 0.805, 5.8, 0.59), ("RNN", 0.705, 8.6, 0.91)]
+MODELS = [("BiLSTM", 0.865, 5.6, 0.42), ("LSTM", 0.815, 6.6, 0.56), ("ChemBERT", 0.805, 5.8, 0.59), ("T5", 0.705, 8.6, 0.91)]
 COMPARE = {
     "acc": {"label": "Token accuracy", "note": "Masked-token accuracy over all masked positions, 95% CI.", "values": [0.862, 0.812, 0.803, 0.701], "domain": [0.55, 1]},
     "top3": {"label": "Top-3", "note": "True token within the top 3, over all masked positions, 95% CI.", "values": [0.964, 0.941, 0.934, 0.872], "domain": [0.55, 1]},
     "exact": {"label": "Exact", "note": "Exact sequence recovery over all test molecules, 95% CI.", "values": [0.738, 0.664, 0.651, 0.482], "domain": [0.3, 1]},
     "valid": {"label": "Validity", "note": "RDKit-valid decoded candidates over all generated candidates, 95% CI.", "values": [0.972, 0.968, 0.966, 0.954], "domain": [0.8, 1]},
 }
-SWEEP = {"BiLSTM": [0.862, 0.803, 0.731], "LSTM": [0.812, 0.744, 0.668], "GRU": [0.803, 0.737, 0.655], "RNN": [0.701, 0.623, 0.541]}
+SWEEP = {"BiLSTM": [0.862, 0.803, 0.731], "LSTM": [0.812, 0.744, 0.668], "ChemBERT": [0.803, 0.737, 0.655], "T5": [0.701, 0.623, 0.541]}
 CONFUSION_TOKENS = ["[C]", "[=C]", "[N]", "[O]", "[=O]", "[F]", "[Ring1]", "[Branch1]"]
 CONFUSION = [
     [0.88, 0.06, 0.02, 0.015, 0.005, 0.002, 0.01, 0.008],
@@ -56,8 +56,8 @@ def _table(split: str) -> list[dict]:
     sweep = SWEEP["BiLSTM"]
     rows = [
         ("E1", "ECFP", "MLP", "n/a", None),
-        ("E2", "SELFIES", "RNN", "15%", row(3)),
-        ("E3", "SELFIES", "GRU", "15%", row(2)),
+        ("E2", "SELFIES", "T5", "15%", row(3)),
+        ("E3", "SELFIES", "ChemBERT", "15%", row(2)),
         ("E4", "SELFIES", "LSTM", "15%", row(1)),
         ("E5", "SELFIES", "BiLSTM", "15%", row(0)),
         ("E6", "SELFIES", "CNN + BiLSTM", "15%", [round(0.851 - pen, 3), round(0.958 - pen, 3), round(0.722 - pen, 3), 0.970]),
@@ -76,12 +76,30 @@ def _rnn_params(cell: int, vocab: int, bi: bool) -> int:
     return vocab * emb + factor * (layer(emb) + layer(h * factor)) + (h * factor + 1) * vocab
 
 
+def _roberta_params(vocab: int, layers: int, h: int = 768, ffn: int = 3072, positions: int = 512) -> int:
+    """RobertaForMaskedLM with tied embeddings. The ChemBERT vocabulary adds 5 special tokens."""
+    embeddings = (vocab + positions + 2) * h + 2 * h
+    attention = 4 * (h * h + h) + 2 * h
+    feed_forward = (h * ffn + ffn) + (ffn * h + h) + 2 * h
+    head = (h * h + h) + 2 * h + vocab
+    return embeddings + layers * (attention + feed_forward) + head
+
+
+def _t5_params(vocab: int, layers: int = 6, d: int = 512, ffn: int = 2048, heads: int = 8, buckets: int = 32) -> int:
+    """T5ForConditionalGeneration with tied embeddings. The T5 vocabulary adds pad, eos, unk and one sentinel."""
+    attention = 4 * d * d
+    feed_forward = 2 * d * ffn
+    encoder = attention + feed_forward + 2 * d
+    decoder = 2 * attention + feed_forward + 3 * d
+    return vocab * d + layers * (encoder + decoder) + 2 * buckets * heads + 2 * d
+
+
 def build(vocab_size: int, funnel: list[dict], sample: int) -> dict:
     architectures = [
         {"id": "BiLSTM", "layers": "2 × bidirectional LSTM, 128", "checkpoint": "bilstm-128x2-qm9", "params": _rnn_params(4, vocab_size, True)},
         {"id": "LSTM", "layers": "2 × LSTM, 128", "checkpoint": "lstm-128x2-qm9", "params": _rnn_params(4, vocab_size, False)},
-        {"id": "GRU", "layers": "2 × GRU, 128", "checkpoint": "gru-128x2-qm9", "params": _rnn_params(3, vocab_size, False)},
-        {"id": "RNN", "layers": "2 × Elman RNN, 128", "checkpoint": "rnn-128x2-qm9", "params": _rnn_params(1, vocab_size, False)},
+        {"id": "ChemBERT", "layers": "6 × RoBERTa encoder, 768, fine-tuned from ChemBERTa", "checkpoint": "chembert-768x6-qm9", "params": _roberta_params(vocab_size + 5, layers=6)},
+        {"id": "T5", "layers": "6 + 6 × T5 encoder-decoder, 512", "checkpoint": "t5-512x6-qm9", "params": _t5_params(vocab_size + 4)},
     ]
     return {
         "architectures": architectures,

@@ -102,7 +102,7 @@ describe("the moment's state", () => {
     await store.getState().reconstruct();
     await store
       .getState()
-      .load({ moleculeId: "aniline", model: "RNN", start: 0, length: 1, seed: 1 });
+      .load({ moleculeId: "aniline", model: "T5", start: 0, length: 1, seed: 1 });
     expect(store.getState().selection.moleculeId).toBe("phenol");
   });
 

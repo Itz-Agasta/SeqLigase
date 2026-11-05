@@ -43,7 +43,7 @@ export function ExperimentsPage() {
     <>
       <Header
         title="Experiments"
-        note="Eight controlled runs across recurrent architectures, evaluated on held-out QM9 molecules."
+        note="Eight controlled runs across recurrent and transformer architectures, evaluated on held-out QM9 molecules."
         actions={
           <div className="w-[190px]">
             <Segmented<Split>

@@ -8,6 +8,9 @@ import {
   Search,
   SunMoon,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { client } from "@/engine/client";
+import type { ExperimentsData } from "@/engine/types";
 import { useLab } from "@/state/lab-store";
 import { useTheme } from "./theme";
 
@@ -38,6 +41,19 @@ export function BrandMark() {
 export function Sidebar({ onSearch }: { onSearch: () => void }) {
   const { toggle } = useTheme();
   const model = useLab((s) => s.selection.model);
+  const [architectures, setArchitectures] = useState<ExperimentsData["architectures"]>([]);
+  const checkpoint = architectures.find((a) => a.id === model)?.checkpoint;
+
+  useEffect(() => {
+    let live = true;
+    client.experiments().then(
+      (d) => live && setArchitectures(d.architectures),
+      () => {},
+    );
+    return () => {
+      live = false;
+    };
+  }, []);
   const inMoment = useLab((s) => s.phase !== "idle");
   return (
     <aside
@@ -86,7 +102,7 @@ export function Sidebar({ onSearch }: { onSearch: () => void }) {
             <span className="bg-good size-[7px] rounded-full" aria-hidden="true" />
             Model server ready
           </div>
-          <span className="font-mono text-[11.5px]">{model.toLowerCase()}-128x2-qm9</span>
+          <span className="font-mono text-[11.5px]">{checkpoint}</span>
         </div>
       </div>
     </aside>

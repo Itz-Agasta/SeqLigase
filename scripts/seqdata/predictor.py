@@ -8,8 +8,8 @@ from dataclasses import dataclass, field
 
 import selfies as sf
 
-MODELS = ["BiLSTM", "LSTM", "GRU", "RNN"]
-RATES = {"BiLSTM": 0.86, "LSTM": 0.81, "GRU": 0.80, "RNN": 0.70}
+MODELS = ["BiLSTM", "LSTM", "ChemBERT", "T5"]
+RATES = {"BiLSTM": 0.86, "LSTM": 0.81, "ChemBERT": 0.80, "T5": 0.70}
 SPAN_PENALTY = 0.05
 PADDING = ["[C]", "[=C]", "[N]", "[O]", "[=O]", "[F]", "[#C]", "[Ring1]", "[Branch1]", "[=Branch1]", "[=N]", "[#N]"]
 

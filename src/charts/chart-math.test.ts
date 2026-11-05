@@ -48,7 +48,7 @@ describe("experiment data", () => {
     for (const split of [data.splits.random, data.splits.scaffold]) {
       const row = (model: string, mask = "15%") =>
         split.table.find((r) => r.model === model && r.mask === mask)!;
-      ["BiLSTM", "LSTM", "GRU", "RNN"].forEach((model, i) => {
+      ["BiLSTM", "LSTM", "ChemBERT", "T5"].forEach((model, i) => {
         expect(row(model).values[0]).toBe(split.compare.acc.values[i]);
         expect(row(model).values[1]).toBe(split.compare.top3.values[i]);
         expect(row(model).values[2]).toBe(split.compare.exact.values[i]);
