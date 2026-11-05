@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { google } from "@ai-sdk/google";
 import { streamText } from "ai";
 
@@ -129,9 +131,10 @@ export default {
     if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY)
       return new Response("Notes aren't configured", { status: 503 });
 
-    const data = await fetch(new URL(`/data/molecules/${req.moleculeId}.json`, request.url));
-    if (!data.ok) return new Response("Unknown molecule", { status: 404 });
-    const record = (await data.json()) as NoteRecord;
+    const file = path.join(process.cwd(), "public/data/molecules", `${req.moleculeId}.json`);
+    const data = await readFile(file, "utf8").catch(() => null);
+    if (!data) return new Response("Unknown molecule", { status: 404 });
+    const record = JSON.parse(data) as NoteRecord;
     const run = record.runs[`${req.model}:${req.start}:${req.length}`];
     if (!run) return new Response("Unknown run", { status: 404 });
 
