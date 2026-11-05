@@ -26,6 +26,9 @@ function cached<T>(load: () => Promise<T>) {
 
 const FIRST_CHUNK_MS = 8000;
 
+/** The note can't be written for this run, so trying again won't help. */
+export class NoteUnavailableError extends Error {}
+
 export function createStaticClient(base = "/data", api = "/api"): InferenceClient {
   const notes = cached(() => fetchJson<Record<string, string>>(`${base}/notes.json`));
   const written = new Map<string, string>();
@@ -59,10 +62,13 @@ export function createStaticClient(base = "/data", api = "/api"): InferenceClien
         len: String(length),
       });
       let text = "";
+      let unavailable = false;
       try {
         const res = await fetch(`${api}/explain?${query}`, { signal: abort.signal });
         // A static host answers unknown paths with the app's HTML, so check this really is a note.
         const isText = res.headers.get("content-type")?.startsWith("text/plain");
+        // Missing, unconfigured or static hosts answer the same way every time. Other errors may pass.
+        unavailable = [400, 404, 503].includes(res.status) || (res.ok && !isText);
         if (!res.ok || !res.body || !isText) throw new Error(`Note failed (${res.status})`);
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
@@ -84,7 +90,10 @@ export function createStaticClient(base = "/data", api = "/api"): InferenceClien
       }
       if (!text) {
         text = (await notes())[key] ?? "";
-        if (!text) throw new Error(`No note for ${key}`);
+        if (!text) {
+          if (unavailable) throw new NoteUnavailableError(`No note for ${key}`);
+          throw new Error(`No note for ${key}`);
+        }
         yield text;
       }
       written.set(key, text);

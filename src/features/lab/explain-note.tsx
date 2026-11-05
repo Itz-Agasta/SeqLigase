@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { client } from "@/engine/client";
+import { NoteUnavailableError } from "@/engine/static-client";
 import type { ReconstructRequest } from "@/engine/types";
 
-type Status = "idle" | "writing" | "done" | "failed";
+type Status = "idle" | "writing" | "done" | "failed" | "unavailable";
 
 /** A short written reading of the computed values, generated on request. */
 export function ExplainNote({ request }: { request: ReconstructRequest }) {
@@ -27,8 +28,8 @@ export function ExplainNote({ request }: { request: ReconstructRequest }) {
         setText((t) => t + chunk);
       }
       if (live.current) setStatus("done");
-    } catch {
-      if (live.current) setStatus("failed");
+    } catch (err) {
+      if (live.current) setStatus(err instanceof NoteUnavailableError ? "unavailable" : "failed");
     }
   }
 
@@ -58,14 +59,19 @@ export function ExplainNote({ request }: { request: ReconstructRequest }) {
           Couldn&rsquo;t write a note. {action("Try again")}
         </p>
       ) : null}
+      {status === "unavailable" ? (
+        <p className="text-muted-foreground text-xs">A note isn&rsquo;t available for this run.</p>
+      ) : null}
       {status === "writing" && !text ? (
         <p className="text-muted-foreground text-xs">Writing a note&hellip;</p>
       ) : null}
-      {text && status !== "failed" ? (
+      {text && status !== "failed" && status !== "unavailable" ? (
         <>
           <p className="text-[12.5px] leading-[1.5]">{text}</p>
           {status === "done" ? (
-            <p className="text-subtle mt-1.5 text-[11px]">Written by Gemini from these values.</p>
+            <p className="text-subtle mt-1.5 text-[11px]">
+              Written by Gemini from RDKit facts and this run.
+            </p>
           ) : null}
         </>
       ) : null}

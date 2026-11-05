@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import { createStaticClient } from "./static-client";
+import { createStaticClient, NoteUnavailableError } from "./static-client";
 
 const record = {
   id: "phenol",
@@ -88,9 +88,16 @@ describe("static client", () => {
       expect(await collect(createStaticClient().explain(req))).toBe("Saved note.");
     });
 
+    it("says a retry won't help when notes aren't available", async () => {
+      route(() => new Response("down", { status: 503 }));
+      await expect(collect(createStaticClient().explain(req))).rejects.toBeInstanceOf(
+        NoteUnavailableError,
+      );
+    });
+
     it("rejects when there is no saved note, then can retry", async () => {
       let ok = false;
-      route(() => (ok ? new Response("Live.") : new Response("down", { status: 503 })));
+      route(() => (ok ? new Response("Live.") : new Response("down", { status: 500 })));
       const client = createStaticClient();
       await expect(collect(client.explain(req))).rejects.toThrow(/No note/);
       ok = true;
