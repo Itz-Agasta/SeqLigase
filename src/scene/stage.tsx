@@ -21,7 +21,7 @@ import { MOMENT_PALETTE, readPalette } from "./colors";
 import { createDirector, type Playback } from "./director";
 import { Fallback2D } from "./fallback-2d";
 import { createRig, type Rig } from "./moment-rig";
-import { stepZoom, zoomLook, ZOOM_LIMITS } from "./look";
+import { INTRO_RATIO, stepZoom, zoomLook, ZOOM_LIMITS } from "./look";
 import { createFpsMonitor, PARTICLES } from "./quality";
 import { useWebGL } from "./use-webgl";
 
@@ -98,7 +98,6 @@ function Molecule({
   const get = useThree((s) => s.get);
   const framed = useRef<string | null>(null);
   const highlighted = useRef<AtomHandle | null>(null);
-  const intro = useRef({ solid: 0 });
   const cameraCommand = useLab((s) => s.cameraCommand);
 
   const built = useMemo<BuiltMolecule | null>(() => {
@@ -127,9 +126,19 @@ function Molecule({
     const controls = get().controls as unknown as { target: THREE.Vector3 } | null;
     controls?.target.set(0, 0, 0);
     if (REDUCED()) return;
-    // A new molecule assembles as solid spheres, then settles into its default look.
-    intro.current = { solid: 1 };
-    gsap.to(intro.current, { solid: 0, duration: 1.1, delay: 0.75, ease: "power2.inOut" });
+    // A molecule opens in the rich solid view, then the camera eases in to the default.
+    const home = camera.position.clone();
+    camera.position.setLength(home.length() * INTRO_RATIO);
+    const opening = gsap.to(camera.position, {
+      x: home.x,
+      y: home.y,
+      z: home.z,
+      duration: 1.8,
+      delay: 0.5,
+      ease: "power2.inOut",
+    });
+    const orbit = get().controls as unknown as THREE.EventDispatcher<{ start: object }> | null;
+    orbit?.addEventListener("start", () => opening.kill());
     built.shells.forEach((shell, i) => {
       gsap.fromTo(
         shell.group.scale,
@@ -166,6 +175,7 @@ function Molecule({
       camera: THREE.PerspectiveCamera;
       controls: { target: THREE.Vector3 } | null;
     };
+    gsap.killTweensOf(camera.position);
     const target = controls?.target ?? new THREE.Vector3();
     const { fit } = framingFor(stageRef.current, built.radius, camera.fov);
     const offset = camera.position.clone().sub(target);
@@ -216,7 +226,6 @@ function Molecule({
       controls.maxDistance = fit * ZOOM_LIMITS.max;
     }
     const look = zoomLook(camera.position.distanceTo(controls?.target ?? ORIGIN) / fit);
-    look.solid = Math.max(look.solid, intro.current.solid);
     applyLook(built, look);
     built.group.getWorldQuaternion(parentQuat).invert();
     for (const b of built.billboards) b.quaternion.copy(parentQuat).multiply(camera.quaternion);
@@ -381,6 +390,7 @@ function MomentController({
       before.radius,
       (camera as THREE.PerspectiveCamera).fov,
     );
+    gsap.killTweensOf(camera.position);
     const distance = camera.position.distanceTo(ORIGIN);
     applyLook(before, zoomLook(distance / framing.fit));
     const rig = createRig({

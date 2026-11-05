@@ -2,7 +2,7 @@ import gsap from "gsap";
 import * as THREE from "three";
 import type { MoleculeRecord, ReconstructResponse, TokenCandidate } from "@/engine/types";
 import { applyLook, type AtomHandle, type BuiltMolecule } from "./build-molecule";
-import { DEFAULT_LOOK, HIDDEN_LOOK } from "./look";
+import { DEFAULT_LOOK, SHELL_OPACITY } from "./look";
 import type { Rig } from "./moment-rig";
 
 export const PHASE_TIMES = { damage: 2, reading: 3.6, ligation: 2.6, verify: 1.4 };
@@ -144,7 +144,7 @@ export function createDirector(input: DirectorInput) {
     // The shells fall away first, so everyone can see the hole being made.
     tl.to(before.shellUniforms.uAlpha, { value: 0, duration: 0.3 }, 0);
     tl.to(before.shellUniforms.uSolid, { value: 0, duration: 0.3 }, 0);
-    tl.call(() => applyLook(before, HIDDEN_LOOK), undefined, 0.32);
+    tl.call(() => applyLook(before, DEFAULT_LOOK), undefined, 0.32);
     tl.to(dust.uniforms.uB, { value: 0.5, duration: 1.2 }, 0);
     tl.to(
       cs,
@@ -509,8 +509,14 @@ export function createDirector(input: DirectorInput) {
     );
     tl.to(
       after.shellUniforms.uAlpha,
-      { value: DEFAULT_LOOK.shell, duration: 0.9, ease: "power2.out" },
+      { value: SHELL_OPACITY, duration: 0.9, ease: "power2.out" },
       healAt,
+    );
+    // The shells settle away, leaving the default view.
+    tl.to(
+      after.shellUniforms.uAlpha,
+      { value: 0, duration: 0.8, ease: "power2.inOut" },
+      T.verify + 0.5,
     );
     byDistance.forEach((shell, i) => {
       tl.to(

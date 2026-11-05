@@ -92,9 +92,10 @@ describe("director", () => {
     expect(swap).toHaveBeenCalledTimes(1);
   });
 
-  it("fades the shells away, then heals them back after the repair", async () => {
+  it("fades the shells away, then heals them back and settles on the default look", async () => {
     const { rig, camera, callbacks, response, record } = setup();
-    const seen: number[] = [];
+    let peak = 0;
+    const before: number[] = [];
     const run = createDirector({
       rig,
       camera,
@@ -103,14 +104,17 @@ describe("director", () => {
       reducedMotion: false,
       ...callbacks,
       onPhase: (p: string) => {
-        if (p === "reading") seen.push(rig.before.shellUniforms.uAlpha.value as number);
+        if (p === "reading") before.push(rig.before.shellUniforms.uAlpha.value as number);
         callbacks.onPhase(p);
+      },
+      onChecks: () => {
+        peak = Math.max(peak, rig.after.shellUniforms.uAlpha.value as number);
       },
     }).play();
     await run.finished;
-    expect(seen[0]).toBeLessThan(0.02);
-    expect(rig.after.shellUniforms.uAlpha.value).toBeCloseTo(DEFAULT_LOOK.shell, 2);
-    expect(rig.after.shellUniforms.uSolid.value).toBe(0);
+    expect(before[0]).toBeLessThan(0.02);
+    expect(peak).toBeGreaterThan(0.05);
+    expect(rig.after.shellUniforms.uAlpha.value).toBe(DEFAULT_LOOK.shell);
     for (const shell of rig.after.shells) expect(shell.group.scale.x).toBeCloseTo(1, 2);
   });
 

@@ -1,14 +1,24 @@
 import { describe, expect, it } from "vite-plus/test";
-import { bondLength, DEFAULT_LOOK, stepZoom, vdwRadius, zoomLook, ZOOM_LIMITS } from "./look";
+import {
+  bondLength,
+  DEFAULT_LOOK,
+  INTRO_RATIO,
+  stepZoom,
+  vdwRadius,
+  zoomLook,
+  ZOOM_LIMITS,
+} from "./look";
 
 describe("zoomLook", () => {
-  it("shows translucent shells around ball-and-stick at the default distance", () => {
-    const look = zoomLook(1);
-    expect(look).toEqual(DEFAULT_LOOK);
-    expect(look.solid).toBe(0);
+  it("is plain ball-and-stick at the default distance", () => {
+    expect(zoomLook(1)).toEqual(DEFAULT_LOOK);
+    expect(DEFAULT_LOOK).toEqual({ solid: 0, shell: 0, labels: 0, lengths: 0 });
+  });
+
+  it("adds glass shells when zooming out a little", () => {
+    const look = zoomLook(1.25);
     expect(look.shell).toBeGreaterThan(0);
-    expect(look.labels).toBe(0);
-    expect(look.lengths).toBe(0);
+    expect(look.solid).toBe(0);
   });
 
   it("is solid space-filling when far away", () => {
@@ -37,6 +47,13 @@ describe("zoomLook", () => {
       }
       previous = look;
     }
+  });
+});
+
+describe("the opening move", () => {
+  it("starts in the solid view and within the zoom limits", () => {
+    expect(zoomLook(INTRO_RATIO).solid).toBe(1);
+    expect(INTRO_RATIO).toBeLessThanOrEqual(ZOOM_LIMITS.max);
   });
 });
 

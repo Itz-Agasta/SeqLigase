@@ -6,14 +6,17 @@ export interface Look {
   lengths: number;
 }
 
-const SHELL_OPACITY = 0.18;
+export const SHELL_OPACITY = 0.18;
 
-export const DEFAULT_LOOK: Look = { solid: 0, shell: SHELL_OPACITY, labels: 0, lengths: 0 };
-export const HIDDEN_LOOK: Look = { solid: 0, shell: 0, labels: 0, lengths: 0 };
+/** Plain ball-and-stick. Zooming out reveals glass shells, then solid atoms. */
+export const DEFAULT_LOOK: Look = { solid: 0, shell: 0, labels: 0, lengths: 0 };
 
 /** Camera distance limits, as a multiple of the distance that frames the molecule. */
 export const ZOOM_LIMITS = { min: 0.3, max: 1.6 };
 const ZOOM_STEP = 1.25;
+
+/** A molecule opens in the solid view at this distance, then eases in to the default. */
+export const INTRO_RATIO = 1.55;
 
 function smooth(from: number, to: number, x: number) {
   const t = Math.max(0, Math.min(1, (x - from) / (to - from)));
@@ -22,8 +25,8 @@ function smooth(from: number, to: number, x: number) {
 
 export function zoomLook(ratio: number): Look {
   return {
-    solid: smooth(1.12, 1.38, ratio),
-    shell: SHELL_OPACITY * smooth(0.62, 0.82, ratio),
+    solid: smooth(1.3, 1.52, ratio),
+    shell: SHELL_OPACITY * smooth(1.04, 1.2, ratio),
     labels: 1 - smooth(0.6, 0.8, ratio),
     lengths: 1 - smooth(0.36, 0.5, ratio),
   };
