@@ -48,7 +48,7 @@ export function createStaticClient(base = "/data"): InferenceClient {
         fetch(`${base}/space.bin`),
       ]);
       if (!res.ok) throw new Error(`Couldn't load ${base}/space.bin (${res.status})`);
-      return { ...meta, points: new Float32Array(await res.arrayBuffer()) };
+      return decodeSpace(meta, await res.arrayBuffer());
     }),
   };
 }

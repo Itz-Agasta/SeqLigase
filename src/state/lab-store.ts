@@ -3,6 +3,7 @@ import { client } from "@/engine/client";
 import { type MaskRatio, type MaxSpan, pickSpan } from "@/engine/mask";
 import type { DisplayedToken } from "@/scene/director";
 import type { InferenceClient, ModelId, MoleculeRecord, ReconstructResponse } from "@/engine/types";
+import { runLog } from "@/features/runs/run-log";
 import { clampSelection, DEFAULT_SELECTION, type LabSelection } from "./url-state";
 
 export type LabStatus = "stale" | "running" | "done";
@@ -41,6 +42,7 @@ export interface LabState {
   fetchResponse: () => Promise<ReconstructResponse | null>;
   reconstruct: () => Promise<void>;
   finish: (response: ReconstructResponse) => void;
+  openRun: (selection: LabSelection) => Promise<void>;
 }
 
 const STALE = { status: "stale", response: null, view: "masked", displayed: {} } as const;
@@ -132,6 +134,22 @@ export function createLabStore(api: InferenceClient) {
     },
 
     finish(response) {
+      const { record, selection } = get();
+      if (record) {
+        runLog.add({
+          id: `${Date.now()}-${selection.model}`,
+          at: Date.now(),
+          moleculeId: record.id,
+          name: record.name,
+          model: selection.model,
+          start: selection.start,
+          length: selection.length,
+          seed: selection.seed,
+          exact: response.exact_recovery,
+          valid: response.valid,
+          tanimoto: response.tanimoto_similarity,
+        });
+      }
       set({
         response,
         status: "done",
@@ -140,6 +158,20 @@ export function createLabStore(api: InferenceClient) {
         displayed: {},
         error: null,
       });
+    },
+
+    async openRun(selection) {
+      await get().load(selection);
+      const response = await get().fetchResponse();
+      if (response)
+        set({
+          response,
+          status: "done",
+          phase: "idle",
+          view: "reconstructed",
+          displayed: {},
+          pendingRun: null,
+        });
     },
 
     async reconstruct() {

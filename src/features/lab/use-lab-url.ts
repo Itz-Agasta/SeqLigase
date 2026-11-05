@@ -10,7 +10,14 @@ export function useLabUrl() {
   useEffect(() => {
     let cancelled = false;
     const params = new URLSearchParams(window.location.search);
-    if (!useLab.getState().record || params.has("mol")) {
+    const current = useLab.getState();
+    const urlMatches =
+      current.record &&
+      params.has("mol") &&
+      params.toString() === serializeLabSearch(current.selection);
+    if (current.record && !params.has("mol")) {
+      router.history.replace(`/?${serializeLabSearch(current.selection)}`);
+    } else if (!urlMatches) {
       void client
         .catalog()
         .then((entries) => {
