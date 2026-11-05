@@ -1,7 +1,6 @@
+import { RouterProvider } from "@tanstack/react-router";
+import { router } from "./router";
+
 export default function App() {
-  return (
-    <main className="grid h-full place-items-center">
-      <p className="text-muted-foreground">SeqLigase</p>
-    </main>
-  );
+  return <RouterProvider router={router} />;
 }
