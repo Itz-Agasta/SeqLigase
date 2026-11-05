@@ -160,7 +160,7 @@ export function CompareViewport(props: {
     <Canvas
       key={`${props.record.id}:${props.response.masked_selfies}`}
       camera={{ fov: 30, position: [3, 3.2, 12], near: 0.1, far: 100 }}
-      dpr={[1, 1.5]}
+      dpr={useLab.getState().quality === "low" ? 1 : [1, 1.5]}
       gl={{ antialias: true }}
       onCreated={({ gl }) => {
         gl.toneMappingExposure = 0.82;

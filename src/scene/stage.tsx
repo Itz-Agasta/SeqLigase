@@ -104,6 +104,9 @@ function Molecule({
   }, [record, response, view, start, length, showHydrogens, theme, inMoment]);
 
   useEffect(() => () => built?.dispose(), [built]);
+  useEffect(() => {
+    if (inMoment) onTip(null);
+  }, [inMoment, onTip]);
 
   useEffect(() => {
     if (!built || !record || framed.current === record.id) return;
@@ -210,8 +213,10 @@ function Renderer({
   const size = useThree((s) => s.size);
   const composer = useRef<{ composer: EffectComposer; bloom: UnrealBloomPass } | null>(null);
   const [monitor] = useState(() => createFpsMonitor(() => useLab.setState({ quality: "low" })));
+  const quality = useLab((s) => s.quality);
 
   useEffect(() => {
+    if (quality === "low") return;
     const { gl, scene, camera } = get();
     const pr = gl.getPixelRatio();
     const target = new THREE.WebGLRenderTarget(size.width * pr, size.height * pr, {
@@ -226,9 +231,10 @@ function Renderer({
     composer.current = { composer: fx, bloom };
     return () => {
       fx.dispose();
+      bloom.dispose();
       composer.current = null;
     };
-  }, [get, size]);
+  }, [get, size, quality]);
 
   useFrame((_, dt) => {
     const { gl, scene, camera, clock } = get();
@@ -250,7 +256,7 @@ function Renderer({
       persp.setViewOffset(size.width, size.height, ox, oy, size.width, size.height);
     }
     if (rig) scene.background = SPACE;
-    if (rig && composer.current && useLab.getState().quality === "high") {
+    if (rig && composer.current) {
       composer.current.bloom.strength = rig.state.bloom;
       composer.current.composer.render(dt);
     } else {
@@ -362,7 +368,11 @@ function MomentController({
       camera.lookAt(0, 0, 0);
       useLab.getState().finish(pending);
     });
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      // Leaving mid-moment lands the run straight away, so state never stays stuck.
+      run.skip();
+    };
   }, [pending, get, rigRef, stageRef]);
   return null;
 }
@@ -371,6 +381,7 @@ export function Stage({ stageRef }: { stageRef: RefObject<HTMLElement | null> })
   const { available, watch } = useWebGL();
   const [tip, setTip] = useState<AtomTip | null>(null);
   const record = useLab((s) => s.record);
+  const quality = useLab((s) => s.quality);
   const rigRef = useRef<Rig | null>(null);
 
   useEffect(() => {
@@ -384,7 +395,7 @@ export function Stage({ stageRef }: { stageRef: RefObject<HTMLElement | null> })
       <div className="fixed inset-0">
         <Canvas
           camera={{ fov: 30, position: [3, 3.2, 12], near: 0.1, far: 100 }}
-          dpr={[1, 2]}
+          dpr={quality === "low" ? 1 : [1, 2]}
           gl={{ antialias: true, alpha: true }}
           onCreated={({ gl }) => {
             gl.toneMappingExposure = 0.82;

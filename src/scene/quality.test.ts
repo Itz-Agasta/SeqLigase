@@ -24,6 +24,13 @@ describe("quality", () => {
     expect(downgraded).toBe(1);
   });
 
+  it("reacts within three seconds at a very low frame rate", () => {
+    let downgraded = 0;
+    const monitor = createFpsMonitor(() => downgraded++);
+    for (let i = 0; i < 30; i++) monitor.frame(0.1);
+    expect(downgraded).toBe(1);
+  });
+
   it("ignores a brief stutter", () => {
     let downgraded = 0;
     const monitor = createFpsMonitor(() => downgraded++);

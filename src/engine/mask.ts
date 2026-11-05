@@ -11,6 +11,12 @@ function mulberry32(seed: number) {
   };
 }
 
+/** Masks that show a molecule's most useful result when it's first chosen. */
+export const DEFAULT_MASKS: Record<string, { start: number; length: number }> = {
+  phenol: { start: 4, length: 2 },
+  aniline: { start: 0, length: 2 },
+};
+
 export function pickSpan(tokens: string[], ratio: MaskRatio, maxSpan: MaxSpan, seed: number) {
   const n = tokens.length;
   const length = Math.min(Math.max(1, Math.round((n * ratio) / 100)), maxSpan, n);

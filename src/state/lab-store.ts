@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { client } from "@/engine/client";
-import { type MaskRatio, type MaxSpan, pickSpan } from "@/engine/mask";
+import { DEFAULT_MASKS, type MaskRatio, type MaxSpan, pickSpan } from "@/engine/mask";
 import type { DisplayedToken } from "@/scene/director";
 import { qualityFromSearch, type QualityTier } from "@/scene/quality";
 import type { InferenceClient, ModelId, MoleculeRecord, ReconstructResponse } from "@/engine/types";
@@ -71,12 +71,14 @@ export function createLabStore(api: InferenceClient) {
     error: null,
 
     async load(selection) {
+      if (get().status === "running") return;
       try {
         const record = await api.molecule(selection.moleculeId);
         const { ratio, maxSpan } = get();
         const span =
           selection.start === null
-            ? pickSpan(record.tokens, ratio, maxSpan, selection.seed)
+            ? (DEFAULT_MASKS[selection.moleculeId] ??
+              pickSpan(record.tokens, ratio, maxSpan, selection.seed))
             : selection;
         const resolved = clampSelection(
           { ...selection, start: span.start, length: span.length },
@@ -159,11 +161,15 @@ export function createLabStore(api: InferenceClient) {
         phase: "idle",
         view: "reconstructed",
         displayed: {},
+        pendingRun: null,
+        beam: null,
+        checks: [],
         error: null,
       });
     },
 
     async openRun(selection) {
+      if (get().status === "running") return;
       await get().load(selection);
       const response = await get().fetchResponse();
       if (response)
@@ -179,7 +185,7 @@ export function createLabStore(api: InferenceClient) {
 
     async reconstruct() {
       if (get().status === "running") return;
-      set({ status: "running", error: null });
+      set({ status: "running", error: null, hoveredToken: null });
       const response = await get().fetchResponse();
       if (!response) return;
       if (get().sceneReady)

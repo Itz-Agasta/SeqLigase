@@ -67,3 +67,10 @@ export function serializeLabSearch(s: LabSelection): string {
   params.set("seed", String(s.seed));
   return params.toString();
 }
+
+/** The address bar form of a selection. It keeps a forced quality setting across URL updates. */
+export function syncSearch(s: LabSelection, currentSearch: string): string {
+  const quality = new URLSearchParams(currentSearch).get("quality");
+  const search = serializeLabSearch(s);
+  return quality ? `${search}&quality=${encodeURIComponent(quality)}` : search;
+}

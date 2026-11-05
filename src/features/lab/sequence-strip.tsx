@@ -48,16 +48,19 @@ export function SequenceStrip() {
     );
 
   const masked = (i: number) => i >= selection.start && i < selection.start + selection.length;
-  const pointerProps = (i: number) => ({
-    onPointerDown: (e: React.PointerEvent) => {
-      (e.target as Element).releasePointerCapture?.(e.pointerId);
-      select.pointerDown(i);
-    },
+  const hoverProps = (i: number) => ({
     onPointerEnter: () => {
       select.pointerEnter(i);
       setHovered(i);
     },
     onPointerLeave: () => setHovered(null),
+  });
+  const maskProps = (i: number) => ({
+    ...hoverProps(i),
+    onPointerDown: (e: React.PointerEvent) => {
+      (e.target as Element).releasePointerCapture?.(e.pointerId);
+      select.pointerDown(i);
+    },
   });
 
   return (
@@ -69,7 +72,8 @@ export function SequenceStrip() {
       <div className="mb-2.5 flex items-baseline gap-2.5">
         <h2 className="text-[13px] font-medium">SELFIES sequence</h2>
         <span className="text-subtle text-xs">
-          {tokens.length} tokens, {selection.length} masked. Drag across tokens to change the mask.
+          {tokens.length} tokens, {selection.length} masked. Drag across the Masked row to change
+          the mask.
         </span>
         <span className="text-subtle ml-auto font-mono text-xs">{record.smiles}</span>
       </div>
@@ -90,7 +94,7 @@ export function SequenceStrip() {
             <Tooltip key={i}>
               <TooltipTrigger asChild>
                 <div
-                  {...pointerProps(i)}
+                  {...hoverProps(i)}
                   className={cn(
                     CHIP,
                     "bg-surface text-muted-foreground",
@@ -120,7 +124,7 @@ export function SequenceStrip() {
               aria-label={`Token ${i}, ${t}${masked(i) ? ", masked" : ""}`}
               disabled={status === "running"}
               tabIndex={select.focus === i ? 0 : -1}
-              {...pointerProps(i)}
+              {...maskProps(i)}
               onKeyDown={(e) => {
                 if (select.keyDown(e, i)) e.preventDefault();
                 const next = e.key === "ArrowRight" ? i + 1 : e.key === "ArrowLeft" ? i - 1 : null;
@@ -148,7 +152,7 @@ export function SequenceStrip() {
               return (
                 <div
                   key={i}
-                  {...pointerProps(i)}
+                  {...hoverProps(i)}
                   className={cn(
                     CHIP,
                     masked(i)
@@ -166,7 +170,7 @@ export function SequenceStrip() {
             return (
               <div
                 key={i}
-                {...pointerProps(i)}
+                {...hoverProps(i)}
                 className={cn(
                   CHIP,
                   "font-medium",

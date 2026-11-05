@@ -13,6 +13,8 @@ import {
 import { client } from "@/engine/client";
 import type { CatalogEntry } from "@/engine/types";
 import { cn } from "@/lib/utils";
+import { compareFinishedOnRun } from "@/scene/use-webgl";
+import { WebGLGate } from "@/scene/webgl-gate";
 import { useLab } from "@/state/lab-store";
 import { DEFAULT_SELECTION } from "@/state/url-state";
 import { summariseCompare } from "./summarise";
@@ -95,7 +97,7 @@ export function CompareRace() {
           disabled={running || rows.length === 0}
           className="h-[29px] text-[13px] font-medium"
           onClick={() => {
-            setFinished(0);
+            setFinished(compareFinishedOnRun(rows.length));
             setRunId((n) => n + 1);
           }}
         >
@@ -114,16 +116,24 @@ export function CompareRace() {
                   {row.model}
                 </div>
                 <div className="relative h-[280px] bg-[#050507]">
-                  <Suspense fallback={null}>
-                    <CompareViewport
-                      key={`${row.model}:${record.id}:${selection.start}:${selection.length}`}
-                      label={`${row.model} repairing ${record.name}`}
-                      record={record}
-                      response={row.response}
-                      runId={runId}
-                      onDone={() => setFinished((n) => n + 1)}
-                    />
-                  </Suspense>
+                  <WebGLGate
+                    fallback={
+                      <p className="text-muted-foreground grid h-full place-items-center p-4 text-center text-xs">
+                        3D view isn’t available in this browser.
+                      </p>
+                    }
+                  >
+                    <Suspense fallback={null}>
+                      <CompareViewport
+                        key={`${row.model}:${record.id}:${selection.start}:${selection.length}`}
+                        label={`${row.model} repairing ${record.name}`}
+                        record={record}
+                        response={row.response}
+                        runId={runId}
+                        onDone={() => setFinished((n) => n + 1)}
+                      />
+                    </Suspense>
+                  </WebGLGate>
                 </div>
                 <div
                   className={cn(

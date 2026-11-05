@@ -1,5 +1,6 @@
 import { lazy, Suspense, useRef } from "react";
 import { type LabView, useLab } from "@/state/lab-store";
+import { overlayNote } from "./format";
 import { MomentOverlay } from "./moment-overlay";
 import { ViewDock } from "./view-dock";
 
@@ -26,12 +27,7 @@ export function StagePanel() {
   const predicted = view === "reconstructed" || view === "overlay";
   const mismatch = predicted && response ? !response.exact_recovery : false;
   const caption = CAPTIONS[view];
-  const note =
-    view === "overlay" && response
-      ? mismatch
-        ? "Outer shells are the original. Amber marks the mismatch."
-        : "Outer shells are the original. Every atom matches."
-      : caption.note;
+  const note = view === "overlay" && response ? overlayNote(response) : caption.note;
 
   return (
     <div ref={stageRef} className="pointer-events-none relative min-h-0 flex-1">

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vite-plus/test";
-import { clampSelection, DEFAULT_SELECTION, parseLabSearch, serializeLabSearch } from "./url-state";
+import {
+  clampSelection,
+  DEFAULT_SELECTION,
+  parseLabSearch,
+  serializeLabSearch,
+  syncSearch,
+} from "./url-state";
 
 const known = new Set(["phenol", "aniline"]);
 
@@ -48,5 +54,17 @@ describe("lab URL state", () => {
   it("round-trips", () => {
     const sel = { moleculeId: "aniline", model: "RNN", start: 2, length: 1, seed: 5 } as const;
     expect(parseLabSearch(new URLSearchParams(serializeLabSearch(sel)), known)).toEqual(sel);
+  });
+});
+
+describe("syncSearch", () => {
+  const sel = { moleculeId: "aniline", model: "RNN", start: 2, length: 1, seed: 5 } as const;
+  it("keeps a quality setting from the current URL", () => {
+    expect(new URLSearchParams(syncSearch(sel, "?quality=low&mol=phenol")).get("quality")).toBe(
+      "low",
+    );
+  });
+  it("adds nothing when the URL has no quality setting", () => {
+    expect(syncSearch(sel, "?mol=phenol")).toBe(serializeLabSearch(sel));
   });
 });

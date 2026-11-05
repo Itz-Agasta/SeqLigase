@@ -20,7 +20,8 @@ export function spanBetween(anchor: number, to: number) {
 }
 
 export function useTokenSelection({ count, start, length, onChange }: Options) {
-  const [focus, setFocus] = useState(start);
+  const [wanted, setFocus] = useState(start);
+  const focus = Math.max(0, Math.min(wanted, count - 1));
   const drag = useRef<{ anchor: number; before: [number, number] } | null>(null);
 
   const pointerDown = useCallback(

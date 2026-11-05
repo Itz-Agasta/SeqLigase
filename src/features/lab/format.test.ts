@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { formatChange, propertyRows, verdictOf } from "./format";
+import { formatChange, overlayNote, propertyRows, verdictOf } from "./format";
 
 const props = { mol_weight: 93.13, logp: 1.27, hbd: 1, hba: 1 };
 const after = { mol_weight: 94.11, logp: 1.15, hbd: 1, hba: 2 };
@@ -52,5 +52,23 @@ describe("verdictOf", () => {
       tone: "warn",
       text: "Invalid: the sequence didn't decode to a molecule",
     });
+  });
+});
+
+describe("overlayNote", () => {
+  it("names a chemically exact result reached through a different sequence", () => {
+    expect(overlayNote({ exact_recovery: true, token_accuracy: 0.5 })).toBe(
+      "Outer shells are the original. Same molecule, written as a different sequence.",
+    );
+  });
+  it("says every atom matches for a clean recovery", () => {
+    expect(overlayNote({ exact_recovery: true, token_accuracy: 1 })).toBe(
+      "Outer shells are the original. Every atom matches.",
+    );
+  });
+  it("points out a mismatch", () => {
+    expect(overlayNote({ exact_recovery: false, token_accuracy: 0.5 })).toBe(
+      "Outer shells are the original. Amber marks the mismatch.",
+    );
   });
 });

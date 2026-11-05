@@ -29,3 +29,10 @@ export function verdictOf(r: Pick<ReconstructResponse, "exact_recovery" | "valid
     ? ({ tone: "good", text: "Exact recovery" } as const)
     : ({ tone: "warn", text: "Partial: valid molecule, different from original" } as const);
 }
+
+export function overlayNote(r: Pick<ReconstructResponse, "exact_recovery" | "token_accuracy">) {
+  if (!r.exact_recovery) return "Outer shells are the original. Amber marks the mismatch.";
+  return r.token_accuracy < 1
+    ? "Outer shells are the original. Same molecule, written as a different sequence."
+    : "Outer shells are the original. Every atom matches.";
+}

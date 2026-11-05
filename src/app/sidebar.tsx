@@ -38,8 +38,10 @@ export function BrandMark() {
 export function Sidebar({ onSearch }: { onSearch: () => void }) {
   const { toggle } = useTheme();
   const model = useLab((s) => s.selection.model);
+  const inMoment = useLab((s) => s.phase !== "idle");
   return (
     <aside
+      inert={inMoment}
       data-chrome
       className="bg-sidebar relative z-10 flex min-h-0 flex-col border-r px-2 py-2.5"
     >

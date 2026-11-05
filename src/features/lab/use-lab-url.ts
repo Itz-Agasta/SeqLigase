@@ -2,7 +2,7 @@ import { useRouter } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { client } from "@/engine/client";
 import { useLab } from "@/state/lab-store";
-import { parseLabSearch, serializeLabSearch } from "@/state/url-state";
+import { parseLabSearch, syncSearch } from "@/state/url-state";
 
 /** Restores the selection from the URL once, then keeps the URL in step with it. */
 export function useLabUrl() {
@@ -14,9 +14,9 @@ export function useLabUrl() {
     const urlMatches =
       current.record &&
       params.has("mol") &&
-      params.toString() === serializeLabSearch(current.selection);
+      params.toString() === syncSearch(current.selection, window.location.search);
     if (current.record && !params.has("mol")) {
-      router.history.replace(`/?${serializeLabSearch(current.selection)}`);
+      router.history.replace(`/?${syncSearch(current.selection, window.location.search)}`);
     } else if (!urlMatches) {
       void client
         .catalog()
@@ -36,7 +36,7 @@ export function useLabUrl() {
         state.record &&
         window.location.pathname === "/"
       ) {
-        router.history.replace(`/?${serializeLabSearch(state.selection)}`);
+        router.history.replace(`/?${syncSearch(state.selection, window.location.search)}`);
       }
     });
     return () => {

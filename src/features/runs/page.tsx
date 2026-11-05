@@ -98,7 +98,14 @@ export function RunsPage() {
                         {TIME.format(r.at)}
                       </td>
                       <td className="border-b px-3.5 py-2 font-medium">
-                        <button type="button" className="hover:underline" onClick={() => open(r)}>
+                        <button
+                          type="button"
+                          className="hover:underline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            open(r);
+                          }}
+                        >
                           {r.name}
                         </button>
                       </td>

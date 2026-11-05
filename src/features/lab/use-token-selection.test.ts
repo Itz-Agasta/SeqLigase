@@ -76,6 +76,26 @@ describe("useTokenSelection", () => {
     expect(onChange).toHaveBeenLastCalledWith(5, 3);
   });
 
+  it("keeps a focusable token when the sequence gets shorter", () => {
+    const onChange = vi.fn();
+    const { result, rerender } = renderHook(
+      (p: { count: number }) =>
+        useTokenSelection({ count: p.count, start: 0, length: 1, onChange }),
+      { initialProps: { count: 13 } },
+    );
+    act(() => void result.current.keyDown({ key: "ArrowRight", shiftKey: false }, 9));
+    expect(result.current.focus).toBe(10);
+    rerender({ count: 3 });
+    expect(result.current.focus).toBe(2);
+  });
+
+  it("starts with a focusable token when the mask is past the end", () => {
+    const { result } = renderHook(() =>
+      useTokenSelection({ count: 3, start: 4, length: 2, onChange: vi.fn() }),
+    );
+    expect(result.current.focus).toBe(2);
+  });
+
   it("restores the old mask when Escape cancels a drag", () => {
     const { result, onChange } = setup(4, 2);
     act(() => {

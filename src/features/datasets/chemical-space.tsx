@@ -10,6 +10,7 @@ import { TipRow } from "@/charts/tooltip";
 import { Button } from "@/components/ui/button";
 import type { CatalogEntry, SpaceData } from "@/engine/types";
 import { CLOUD_SCALE, PointCloud } from "@/scene/point-cloud";
+import { WebGLGate } from "@/scene/webgl-gate";
 import { useLab } from "@/state/lab-store";
 
 const REDUCED = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -162,15 +163,23 @@ export function ChemicalSpace({ space, catalog }: { space: SpaceData; catalog: C
         </Button>
       </div>
       <div ref={panel} className="relative h-[520px] bg-[#050507] [&:fullscreen]:h-screen">
-        <Canvas
-          camera={{ fov: 42, position: [0, 0, 22], near: 0.05, far: 100 }}
-          dpr={[1, 2]}
-          gl={{ antialias: false }}
-          raycaster={{ params: { Points: { threshold: 0.05 } } as never }}
-          aria-label="3D map of QM9 molecules. Drag to rotate."
+        <WebGLGate
+          fallback={
+            <p className="grid h-full place-items-center p-4 text-center text-xs text-[#a1a3a9]">
+              3D map isn’t available in this browser.
+            </p>
+          }
         >
-          <Scene space={space} catalog={catalog} focus={focus} paused={paused} />
-        </Canvas>
+          <Canvas
+            camera={{ fov: 42, position: [0, 0, 22], near: 0.05, far: 100 }}
+            dpr={[1, 2]}
+            gl={{ antialias: false }}
+            raycaster={{ params: { Points: { threshold: 0.05 } } as never }}
+            aria-label="3D map of QM9 molecules. Drag to rotate."
+          >
+            <Scene space={space} catalog={catalog} focus={focus} paused={paused} />
+          </Canvas>
+        </WebGLGate>
       </div>
     </section>
   );

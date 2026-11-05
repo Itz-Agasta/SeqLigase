@@ -69,3 +69,54 @@ describe("lab store", () => {
     expect(store.getState().error).toMatch(/offline/);
   });
 });
+
+describe("the moment's state", () => {
+  let store: ReturnType<typeof createLabStore>;
+  beforeEach(async () => {
+    store = createLabStore(client);
+    await store
+      .getState()
+      .load({ moleculeId: "phenol", model: "BiLSTM", start: 4, length: 2, seed: 1337 });
+    store.setState({ sceneReady: true });
+  });
+
+  it("clears the pending run when a run lands", async () => {
+    await store.getState().reconstruct();
+    expect(store.getState().pendingRun).toBe(run);
+    store.getState().finish(run as never);
+    expect(store.getState().pendingRun).toBeNull();
+  });
+
+  it("can start the same run a second time", async () => {
+    await store.getState().reconstruct();
+    store.getState().finish(run as never);
+    const changes: unknown[] = [];
+    store.subscribe((s, p) => {
+      if (s.pendingRun !== p.pendingRun) changes.push(s.pendingRun);
+    });
+    await store.getState().reconstruct();
+    expect(changes).toEqual([run]);
+  });
+
+  it("ignores loading another molecule during a run", async () => {
+    await store.getState().reconstruct();
+    await store
+      .getState()
+      .load({ moleculeId: "aniline", model: "RNN", start: 0, length: 1, seed: 1 });
+    expect(store.getState().selection.moleculeId).toBe("phenol");
+  });
+
+  it("clears the hovered token when a run starts", async () => {
+    store.setState({ hoveredToken: 3 });
+    await store.getState().reconstruct();
+    expect(store.getState().hoveredToken).toBeNull();
+  });
+
+  it("gives aniline the mask that shows the partial recovery", async () => {
+    store.setState({ status: "done" });
+    await store
+      .getState()
+      .load({ moleculeId: "aniline", model: "BiLSTM", start: null, length: 2, seed: 1337 });
+    expect(store.getState().selection).toMatchObject({ start: 0, length: 2 });
+  });
+});

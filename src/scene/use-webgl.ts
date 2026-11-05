@@ -28,3 +28,8 @@ export function useWebGL() {
   useEffect(() => () => stop.current?.(), []);
   return { available, watch };
 }
+
+/** Compare's verdicts don't need 3D, so without WebGL they land immediately. */
+export function compareFinishedOnRun(rows: number) {
+  return webglSupported() ? 0 : rows;
+}
