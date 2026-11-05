@@ -143,24 +143,24 @@ export function ChemicalSpace({ space, catalog }: { space: SpaceData; catalog: C
             Repair Lab.
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="xs"
-          className="flex-none"
-          aria-pressed={paused}
-          onClick={() => setPaused((p) => !p)}
-        >
-          {paused ? "Rotate" : "Pause"}
-        </Button>
-        <Button
-          variant="outline"
-          size="xs"
-          className="flex-none"
-          onClick={() => void panel.current?.requestFullscreen?.()}
-        >
-          <Maximize aria-hidden="true" />
-          Full screen
-        </Button>
+        <div className="flex flex-none items-center gap-1.5">
+          <Button
+            variant="outline"
+            size="xs"
+            aria-pressed={paused}
+            onClick={() => setPaused((p) => !p)}
+          >
+            {paused ? "Rotate" : "Pause"}
+          </Button>
+          <Button
+            variant="outline"
+            size="xs"
+            onClick={() => void panel.current?.requestFullscreen?.()}
+          >
+            <Maximize aria-hidden="true" />
+            Full screen
+          </Button>
+        </div>
       </div>
       <div
         ref={panel}
