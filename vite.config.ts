@@ -69,7 +69,7 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
-    include: ["src/**/*.test.{ts,tsx}", "api/**/*.test.ts"],
+    include: ["src/**/*.test.{ts,tsx}", "tests/**/*.test.ts"],
   },
   plugins: lazyPlugins(() => [react(), tailwindcss(), devApi()]),
 });

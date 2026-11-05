@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import handler, { buildNotePrompt, type NoteRecord, parseNoteRequest } from "./explain.ts";
+import handler, { buildNotePrompt, type NoteRecord, parseNoteRequest } from "../api/explain.ts";
 
 const props = { mol_weight: 94.11, logp: 1.39, hbd: 1, hba: 1 };
 const run = {
@@ -96,11 +96,13 @@ describe("handler", () => {
 
   it("returns 404 for a run that doesn't exist", async () => {
     vi.stubEnv("GOOGLE_GENERATIVE_AI_API_KEY", "test");
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => Response.json(record)),
-    );
-    const res = await handler.fetch(new Request(url("mol=phenol&model=T5&start=0&len=3")));
+    const res = await handler.fetch(new Request(url("mol=phenol&model=T5&start=40&len=3")));
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 404 for an unknown molecule", async () => {
+    vi.stubEnv("GOOGLE_GENERATIVE_AI_API_KEY", "test");
+    const res = await handler.fetch(new Request(url("mol=nope&model=T5&start=0&len=1")));
     expect(res.status).toBe(404);
   });
 });
