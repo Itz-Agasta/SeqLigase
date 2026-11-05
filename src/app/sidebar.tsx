@@ -8,6 +8,7 @@ import {
   Search,
   SunMoon,
 } from "lucide-react";
+import { useLab } from "@/state/lab-store";
 import { useTheme } from "./theme";
 
 const NAV = [
@@ -36,6 +37,7 @@ export function BrandMark() {
 
 export function Sidebar({ onSearch }: { onSearch: () => void }) {
   const { toggle } = useTheme();
+  const model = useLab((s) => s.selection.model);
   return (
     <aside
       data-chrome
@@ -82,7 +84,7 @@ export function Sidebar({ onSearch }: { onSearch: () => void }) {
             <span className="bg-good size-[7px] rounded-full" aria-hidden="true" />
             Model server ready
           </div>
-          <span className="font-mono text-[11.5px]">bilstm-128x2-qm9</span>
+          <span className="font-mono text-[11.5px]">{model.toLowerCase()}-128x2-qm9</span>
         </div>
       </div>
     </aside>

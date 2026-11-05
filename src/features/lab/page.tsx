@@ -3,6 +3,7 @@ import { Header } from "@/app/header";
 import { Button } from "@/components/ui/button";
 import { useLab } from "@/state/lab-store";
 import { Inspector } from "./inspector";
+import { ShareExportActions } from "./share-export-actions";
 import { SequenceStrip } from "./sequence-strip";
 import { StagePanel } from "./stage-panel";
 import { useLabUrl } from "./use-lab-url";
@@ -29,7 +30,7 @@ export function RepairLabPage() {
 
   return (
     <>
-      <Header>
+      <Header actions={<ShareExportActions />}>
         Repair Lab <span className="text-border-strong">/</span>{" "}
         <b className="text-foreground font-medium">{record?.name}</b>
       </Header>
