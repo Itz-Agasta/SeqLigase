@@ -1,21 +1,22 @@
 import { scaleLinear, scaleSqrt } from "@visx/scale";
 import { ChartFrame } from "@/charts/chart-frame";
 import { ChartWidth } from "@/charts/chart-width";
+import { useWide } from "@/charts/use-wide";
 import { useTip } from "@/charts/tip-context";
 import { TipRow } from "@/charts/tooltip";
 import type { ExperimentsData } from "@/engine/types";
 
-const H = 240;
 const M = { t: 8, r: 14, b: 24, l: 40 };
 
 export function TanimotoHistogram({ data }: { data: ExperimentsData["tanimoto"] }) {
   const { show, hide } = useTip();
+  const H = useWide() ? 296 : 240;
   const bins = data.bins;
   return (
     <ChartFrame
       title="Structural similarity, BiLSTM"
       note={`Morgan Tanimoto to the original, over RDKit-valid outputs (n = ${data.valid.toLocaleString("en")} of ${data.total.toLocaleString("en")}). Square-root scale.`}
-      className="col-span-6"
+      className="col-span-6 min-[1600px]:col-span-4"
     >
       <ChartWidth>
         {({ width }) => {

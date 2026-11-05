@@ -2,22 +2,23 @@ import { scaleLinear, scalePoint } from "@visx/scale";
 import { LinePath } from "@visx/shape";
 import { ChartFrame } from "@/charts/chart-frame";
 import { ChartWidth } from "@/charts/chart-width";
+import { useWide } from "@/charts/use-wide";
 import { modelColor } from "@/charts/chart-math";
 import { ModelLegend } from "@/charts/legend";
 import { useTip } from "@/charts/tip-context";
 import { TipRow } from "@/charts/tooltip";
 import { MODEL_IDS, type SplitData } from "@/engine/types";
 
-const H = 166;
 const M = { t: 8, r: 12, b: 22, l: 38 };
 
 export function MaskSweep({ split, ratios }: { split: SplitData; ratios: number[] }) {
   const { show, hide } = useTip();
+  const H = useWide() ? 258 : 166;
   return (
     <ChartFrame
       title="Difficulty by mask ratio"
       note="Masked-token accuracy over all masked positions."
-      className="col-span-5"
+      className="col-span-5 min-[1600px]:col-span-4"
     >
       <ModelLegend />
       <ChartWidth>
@@ -33,7 +34,7 @@ export function MaskSweep({ split, ratios }: { split: SplitData; ratios: number[
               aria-label="Masked-token accuracy at each mask ratio by model"
               className="block"
             >
-              {[0.5, 0.6, 0.7, 0.8, 0.9].map((t) => (
+              {[0.4, 0.5, 0.6, 0.7, 0.8, 0.9].map((t) => (
                 <g key={t}>
                   <line x1={M.l} x2={width - M.r} y1={y(t)} y2={y(t)} className="stroke-border" />
                   <text

@@ -45,7 +45,7 @@ export function ExperimentsPage() {
         <b className="text-foreground font-medium">Experiments</b>
       </Header>
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-[1240px] px-5 pt-[18px] pb-11">
+        <div className="mx-auto max-w-[1760px] px-6 pt-[18px] pb-11">
           <div className="mb-3.5 flex items-end justify-between gap-4">
             <div>
               <h1 className="text-xl font-semibold tracking-tight">Experiments</h1>

@@ -115,7 +115,7 @@ export function CompareRace() {
                   />
                   {row.model}
                 </div>
-                <div className="relative h-[280px] bg-[#050507]">
+                <div className="relative h-[280px] bg-[#050507] min-[1600px]:h-[420px]">
                   <WebGLGate
                     fallback={
                       <p className="text-muted-foreground grid h-full place-items-center p-4 text-center text-xs">

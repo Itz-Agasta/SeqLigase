@@ -162,7 +162,10 @@ export function ChemicalSpace({ space, catalog }: { space: SpaceData; catalog: C
           Full screen
         </Button>
       </div>
-      <div ref={panel} className="relative h-[520px] bg-[#050507] [&:fullscreen]:h-screen">
+      <div
+        ref={panel}
+        className="relative h-[520px] bg-[#050507] min-[1600px]:h-[660px] [&:fullscreen]:h-screen"
+      >
         <WebGLGate
           fallback={
             <p className="grid h-full place-items-center p-4 text-center text-xs text-[#a1a3a9]">

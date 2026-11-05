@@ -4,6 +4,7 @@ import { Area, LinePath } from "@visx/shape";
 import { useRef, useState } from "react";
 import { ChartFrame } from "@/charts/chart-frame";
 import { ChartWidth } from "@/charts/chart-width";
+import { useWide } from "@/charts/use-wide";
 import { curveDomain, modelColor, resolveBrush } from "@/charts/chart-math";
 import { ModelLegend } from "@/charts/legend";
 import { useTip } from "@/charts/tip-context";
@@ -12,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { MODEL_IDS, type ModelId, type SplitData } from "@/engine/types";
 import { Segmented } from "@/features/lab/segmented";
 
-const H = 290;
 const M = { t: 8, r: 14, b: 24, l: 42 };
 const FULL: [number, number] = [1, 40];
 
@@ -33,6 +33,7 @@ function Plot({
   onZoom: (z: [number, number]) => void;
   onEpoch: (e: number | null) => void;
 }) {
+  const H = useWide() ? 330 : 290;
   const { show, hide } = useTip();
   const [hover, setHover] = useState<number | null>(null);
   const [drag, setDrag] = useState<{ from: number; to: number } | null>(null);
@@ -220,7 +221,7 @@ export function TrainingCurves({ split }: { split: SplitData }) {
     <ChartFrame
       title="Training curves"
       note="Three seeds per model, band shows the range. Drag across the plot to zoom."
-      className="col-span-12"
+      className="col-span-12 min-[1600px]:col-span-7"
       actions={
         <>
           {zoom ? (

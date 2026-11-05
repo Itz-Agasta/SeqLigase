@@ -2,23 +2,23 @@ import { scaleLinear } from "@visx/scale";
 import { useState } from "react";
 import { ChartFrame } from "@/charts/chart-frame";
 import { ChartWidth } from "@/charts/chart-width";
+import { useWide } from "@/charts/use-wide";
 import { modelColor } from "@/charts/chart-math";
 import { useTip } from "@/charts/tip-context";
 import { TipRow } from "@/charts/tooltip";
 import { type CompareMetric, MODEL_IDS, type SplitData } from "@/engine/types";
 import { Segmented } from "@/features/lab/segmented";
 
-const ROW = 38;
-
 export function ModelComparison({ split }: { split: SplitData }) {
   const [metric, setMetric] = useState<CompareMetric>("acc");
   const { show, hide } = useTip();
+  const ROW = useWide() ? 72 : 38;
   const c = split.compare[metric];
   return (
     <ChartFrame
       title="Model comparison"
       note={c.note}
-      className="col-span-7"
+      className="col-span-7 min-[1600px]:col-span-5"
       actions={
         <div className="w-[350px]">
           <Segmented<CompareMetric>

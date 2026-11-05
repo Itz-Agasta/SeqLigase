@@ -61,7 +61,7 @@ export function RunsPage() {
         <b className="text-foreground font-medium">Runs</b>
       </Header>
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-[1240px] px-5 pt-[18px] pb-11">
+        <div className="mx-auto max-w-[1760px] px-6 pt-[18px] pb-11">
           <h1 className="text-xl font-semibold tracking-tight">Runs</h1>
           <p className="text-muted-foreground mb-3.5">
             Every reconstruction from this browser, newest first. Open one to see it in the Repair
@@ -76,14 +76,14 @@ export function RunsPage() {
             </div>
           ) : (
             <div className="bg-surface overflow-hidden rounded-[10px] border">
-              <table className="w-full border-collapse text-[12.5px]">
+              <table className="w-full table-fixed border-collapse text-[12.5px]">
                 <thead>
                   <tr className="text-subtle text-left">
-                    <th className="border-b px-3.5 py-2 font-normal">Time</th>
-                    <th className="border-b px-3.5 py-2 font-normal">Molecule</th>
-                    <th className="border-b px-3.5 py-2 font-normal">Model</th>
-                    <th className="border-b px-3.5 py-2 font-normal">Mask</th>
-                    <th className="border-b px-3.5 py-2 font-normal">Result</th>
+                    <th className="w-[18%] border-b px-3.5 py-2 font-normal">Time</th>
+                    <th className="w-[22%] border-b px-3.5 py-2 font-normal">Molecule</th>
+                    <th className="w-[12%] border-b px-3.5 py-2 font-normal">Model</th>
+                    <th className="w-[18%] border-b px-3.5 py-2 font-normal">Mask</th>
+                    <th className="w-[16%] border-b px-3.5 py-2 font-normal">Result</th>
                     <th className="border-b px-3.5 py-2 text-right font-normal">Tanimoto</th>
                   </tr>
                 </thead>

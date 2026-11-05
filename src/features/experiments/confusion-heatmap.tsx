@@ -1,24 +1,25 @@
 import { useState } from "react";
 import { ChartFrame } from "@/charts/chart-frame";
 import { ChartWidth } from "@/charts/chart-width";
+import { useWide } from "@/charts/use-wide";
 import { useTip } from "@/charts/tip-context";
 import { TipRow } from "@/charts/tooltip";
 import type { ExperimentsData } from "@/engine/types";
 
 const LEFT = 70;
 const TOP = 22;
-const CELL_H = 26;
 const short = (t: string) => t.replace("Branch", "Br").replace("Ring", "Rg");
 
 export function ConfusionHeatmap({ confusion }: { confusion: ExperimentsData["confusion"] }) {
   const { show, hide } = useTip();
+  const CELL_H = useWide() ? 34 : 26;
   const [active, setActive] = useState<[number, number] | null>(null);
   const n = confusion.tokens.length;
   return (
     <ChartFrame
       title="Token confusion, BiLSTM"
       note="Share of each true token predicted as each column. Rows sum to 100%."
-      className="col-span-6"
+      className="col-span-6 min-[1600px]:col-span-4"
     >
       <ChartWidth>
         {({ width }) => {
