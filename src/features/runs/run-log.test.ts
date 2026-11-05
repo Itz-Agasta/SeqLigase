@@ -54,6 +54,14 @@ describe("runLog", () => {
     expect(runLog.list()).toEqual([]);
   });
 
+  it("restores a cleared history", () => {
+    runLog.add(entry(1));
+    const before = runLog.list();
+    runLog.clear();
+    runLog.replace(before);
+    expect(runLog.list()).toEqual(before);
+  });
+
   it("clears", () => {
     runLog.add(entry(1));
     runLog.clear();

@@ -20,7 +20,7 @@ export function ModelComparison({ split }: { split: SplitData }) {
       note={c.note}
       className="col-span-7"
       actions={
-        <div className="w-[320px]">
+        <div className="w-[350px]">
           <Segmented<CompareMetric>
             label="Metric"
             value={metric}

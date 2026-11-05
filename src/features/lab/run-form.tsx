@@ -109,6 +109,9 @@ export function RunForm({ onRun }: { onRun: () => void }) {
       <Field label="Seed" htmlFor="seed">
         <Input
           id="seed"
+          name="seed"
+          autoComplete="off"
+          spellCheck={false}
           inputMode="numeric"
           disabled={running}
           value={selection.seed}
@@ -124,7 +127,7 @@ export function RunForm({ onRun }: { onRun: () => void }) {
         disabled={running}
         className="mt-1.5 h-8 w-full gap-2 text-[13px] font-medium"
       >
-        {running ? "Reconstructing" : "Reconstruct"}
+        {running ? "Reconstructing…" : "Reconstruct"}
         <kbd className="font-mono text-[11px] opacity-60">⌘↵</kbd>
       </Button>
       <Button

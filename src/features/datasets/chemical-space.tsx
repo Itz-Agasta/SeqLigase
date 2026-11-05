@@ -67,7 +67,7 @@ function Scene({
         camera.lookAt(look);
       },
     });
-    const waves = gsap.timeline({ repeat: -1, repeatDelay: 2.6, delay: 2.4 });
+    const waves = gsap.timeline({ repeat: 2, repeatDelay: 2.6, delay: 2.4 });
     waves.fromTo(
       wave,
       { r: 0, a: 1 },
@@ -115,7 +115,7 @@ function Scene({
       <OrbitControls
         enabled={!flying}
         enablePan={false}
-        autoRotate={!flying && !REDUCED()}
+        autoRotate={!flying && !paused && !REDUCED()}
         autoRotateSpeed={0.35}
         minDistance={3}
         maxDistance={30}
@@ -127,6 +127,7 @@ function Scene({
 export function ChemicalSpace({ space, catalog }: { space: SpaceData; catalog: CatalogEntry[] }) {
   const panel = useRef<HTMLDivElement>(null);
   const moleculeId = useLab((s) => s.selection.moleculeId);
+  const [paused, setPaused] = useState(false);
   const focus = space.catalog[moleculeId] !== undefined ? moleculeId : "phenol";
   return (
     <section className="bg-surface col-span-12">
@@ -157,7 +158,7 @@ export function ChemicalSpace({ space, catalog }: { space: SpaceData; catalog: C
           raycaster={{ params: { Points: { threshold: 0.05 } } as never }}
           aria-label="3D map of QM9 molecules. Drag to rotate."
         >
-          <Scene space={space} catalog={catalog} focus={focus} />
+          <Scene space={space} catalog={catalog} focus={focus} paused={paused} />
         </Canvas>
       </div>
     </section>

@@ -15,5 +15,5 @@ export function filterCommands(commands: Command[], query: string) {
 export function outOfDomainMessage(query: string, commands: Command[]) {
   const q = query.trim();
   if (!q || filterCommands(commands, q).length > 0) return null;
-  return `"${q}" isn't in this set. The model covers neutral molecules with C, H, N, O and F, up to 9 heavy atoms, from QM9.`;
+  return `“${q}” isn’t in this set. The model covers neutral molecules with C, H, N, O and F, up to 9 heavy atoms, from QM9.`;
 }

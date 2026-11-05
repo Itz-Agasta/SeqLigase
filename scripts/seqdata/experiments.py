@@ -90,5 +90,5 @@ def build(vocab_size: int, funnel: list[dict], sample: int) -> dict:
         "maskRatios": [15, 25, 35],
         "confusion": {"tokens": CONFUSION_TOKENS, "matrix": CONFUSION},
         "tanimoto": {"bins": HISTOGRAM, "valid": sum(HISTOGRAM), "total": 2000},
-        "funnel": funnel + [{"step": "Training sample", "count": sample}],
+        "funnel": funnel + [{"step": "Training set", "count": sample}],
     }

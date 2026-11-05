@@ -35,6 +35,13 @@ export const runLog = {
       // Storage can be blocked. History is optional.
     }
   },
+  replace(entries: RunEntry[]) {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(entries));
+    } catch {
+      // Storage can be blocked. History is optional.
+    }
+  },
   clear() {
     try {
       localStorage.removeItem(KEY);

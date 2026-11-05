@@ -61,7 +61,7 @@ export function CompareRace() {
                 .
               </>
             ) : (
-              "Loading"
+              "Loading…"
             )}
           </p>
         </div>
@@ -99,7 +99,7 @@ export function CompareRace() {
             setRunId((n) => n + 1);
           }}
         >
-          {running ? "Comparing" : done ? "Compare again" : "Run comparison"}
+          {running ? "Comparing…" : done ? "Compare again" : "Run comparison"}
         </Button>
       </div>
       <div className="grid grid-cols-4 gap-px border-t">
@@ -176,7 +176,7 @@ export function CompareRace() {
                       </div>
                     </>
                   ) : (
-                    <p className="text-subtle">{running ? "Reconstructing" : "Ready to run"}</p>
+                    <p className="text-subtle">{running ? "Reconstructing…" : "Ready to run"}</p>
                   )}
                 </div>
               </div>

@@ -76,7 +76,7 @@ export function SequenceStrip() {
       <TooltipProvider delayDuration={250}>
         <div
           className="grid items-stretch gap-1"
-          style={{ gridTemplateColumns: `68px repeat(${tokens.length}, minmax(max-content, 1fr))` }}
+          style={{ gridTemplateColumns: `62px repeat(${tokens.length}, minmax(max-content, 1fr))` }}
         >
           <div />
           {tokens.map((_, i) => (

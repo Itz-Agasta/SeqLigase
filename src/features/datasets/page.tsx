@@ -37,7 +37,7 @@ export function DatasetsPage() {
           <h1 className="mb-3.5 text-xl font-semibold tracking-tight">Datasets</h1>
           {error ? (
             <p role="alert" className="mb-3 text-xs">
-              {error}
+              {error} Reload the page to try again.
             </p>
           ) : null}
           <TipProvider>

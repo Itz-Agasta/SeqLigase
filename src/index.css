@@ -8,6 +8,7 @@
 
 /* Light theme */
 :root {
+  color-scheme: light;
   --background: #ffffff;
   --foreground: #17171a;
   --card: #ffffff;
@@ -170,6 +171,9 @@
   body,
   #root {
     height: 100%;
+  }
+  html {
+    overscroll-behavior: none;
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;

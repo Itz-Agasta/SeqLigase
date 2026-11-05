@@ -15,7 +15,7 @@ export function Shell() {
         className="grid h-full grid-cols-[216px_minmax(0,1fr)]"
       >
         <Sidebar onSearch={() => setSearchOpen(true)} />
-        <main className="flex min-h-0 min-w-0 flex-col">
+        <main id="main" tabIndex={-1} className="flex min-h-0 min-w-0 flex-col">
           <Outlet />
         </main>
       </div>

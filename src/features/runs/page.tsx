@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { CircleCheck, TriangleAlert } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Header } from "@/app/header";
 import { Button } from "@/components/ui/button";
 import { useLab } from "@/state/lab-store";
@@ -38,8 +39,18 @@ export function RunsPage() {
               variant="outline"
               size="sm"
               onClick={() => {
+                const previous = runs;
                 runLog.clear();
                 setRuns([]);
+                toast("History cleared", {
+                  action: {
+                    label: "Undo",
+                    onClick: () => {
+                      runLog.replace(previous);
+                      setRuns(previous);
+                    },
+                  },
+                });
               }}
             >
               Clear history
