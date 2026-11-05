@@ -8,11 +8,9 @@ import { Segmented } from "@/features/lab/segmented";
 import { ConfusionHeatmap } from "./confusion-heatmap";
 import { ExperimentTable } from "./experiment-table";
 import { MaskSweep } from "./mask-sweep";
-import { ModelComparison } from "./model-comparison";
+import { ModelComparison, type Split } from "./model-comparison";
 import { TanimotoHistogram } from "./tanimoto-histogram";
 import { TrainingCurves } from "./training-curves";
-
-type Split = "random" | "scaffold";
 
 export function ExperimentsPage() {
   const [data, setData] = useState<ExperimentsData | null>(null);
@@ -79,10 +77,10 @@ export function ExperimentsPage() {
             <TipProvider>
               <div className="bg-border grid grid-cols-12 gap-px overflow-hidden rounded-[10px] border">
                 <TrainingCurves split={current} />
-                <ModelComparison split={current} />
+                <ModelComparison splits={data.splits} active={split} />
                 <MaskSweep split={current} ratios={data.maskRatios} />
-                <ConfusionHeatmap confusion={data.confusion} />
-                <TanimotoHistogram data={data.tanimoto} />
+                <ConfusionHeatmap confusion={current.confusion} />
+                <TanimotoHistogram data={current.tanimoto} />
                 <ExperimentTable split={current} />
               </div>
             </TipProvider>

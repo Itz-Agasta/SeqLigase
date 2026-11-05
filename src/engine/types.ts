@@ -107,10 +107,21 @@ export interface SplitData {
   curves: Record<ModelId, { acc: CurvePoint[]; loss: CurvePoint[] }>;
   compare: Record<
     CompareMetric,
-    { label: string; note: string; values: number[]; ci: number[]; domain: [number, number] }
+    {
+      label: string;
+      note: string;
+      values: number[];
+      lo: number[];
+      hi: number[];
+      domain: [number, number];
+    }
   >;
   table: { id: string; input: string; model: string; mask: string; values: (number | null)[] }[];
-  sweep: Record<ModelId, number[]>;
+  sweep: Record<ModelId, { value: number; lo: number; hi: number }[]>;
+  /** Rows are true tokens. Columns are the same tokens, then Other. */
+  confusion: { tokens: string[]; matrix: number[][]; tokenCount: number };
+  /** Exact recoveries are counted apart, so bins hold only the other valid outputs. */
+  tanimoto: { bins: number[]; exact: number; valid: number; total: number };
 }
 
 export interface ExperimentsData {
@@ -118,8 +129,6 @@ export interface ExperimentsData {
   vocabSize: number;
   splits: { random: SplitData; scaffold: SplitData };
   maskRatios: number[];
-  confusion: { tokens: string[]; matrix: number[][] };
-  tanimoto: { bins: number[]; valid: number; total: number };
   funnel: { step: string; count: number }[];
 }
 

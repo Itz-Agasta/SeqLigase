@@ -220,7 +220,7 @@ export function TrainingCurves({ split }: { split: SplitData }) {
   return (
     <ChartFrame
       title="Training curves"
-      note="Three seeds per model, band shows the range. Drag across the plot to zoom."
+      note="Validation metrics. Three seeds per model, band shows the range. Drag across the plot to zoom."
       className="col-span-12 min-[1600px]:col-span-7"
       actions={
         <>
@@ -247,6 +247,7 @@ export function TrainingCurves({ split }: { split: SplitData }) {
       }
     >
       <ModelLegend
+        caption={`at epoch ${shownEpoch}`}
         values={values}
         hidden={hidden}
         onToggle={(m) => {

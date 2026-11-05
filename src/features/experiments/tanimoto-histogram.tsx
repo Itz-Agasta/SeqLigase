@@ -1,38 +1,55 @@
-import { scaleLinear, scaleSqrt } from "@visx/scale";
+import { scaleLinear } from "@visx/scale";
 import { ChartFrame } from "@/charts/chart-frame";
 import { ChartWidth } from "@/charts/chart-width";
 import { useWide } from "@/charts/use-wide";
 import { useTip } from "@/charts/tip-context";
 import { TipRow } from "@/charts/tooltip";
-import type { ExperimentsData } from "@/engine/types";
+import type { SplitData } from "@/engine/types";
 
-const M = { t: 8, r: 14, b: 24, l: 40 };
+const M = { t: 8, r: 14, b: 24, l: 34 };
 
-export function TanimotoHistogram({ data }: { data: ExperimentsData["tanimoto"] }) {
+export function TanimotoHistogram({ data }: { data: SplitData["tanimoto"] }) {
   const { show, hide } = useTip();
-  const H = useWide() ? 296 : 240;
+  const H = useWide() ? 276 : 226;
   const bins = data.bins;
+  const others = data.valid - data.exact;
   return (
     <ChartFrame
       title="Structural similarity, T5"
-      note={`Morgan Tanimoto to the original, over RDKit-valid outputs (n = ${data.valid.toLocaleString("en")} of ${data.total.toLocaleString("en")}). Square-root scale.`}
+      note={`Morgan Tanimoto to the original, at 15% mask. ${data.valid.toLocaleString("en")} of ${data.total.toLocaleString("en")} outputs are RDKit-valid.`}
       className="col-span-6 min-[1600px]:col-span-4"
     >
+      <div className="mb-1 flex flex-wrap items-baseline gap-x-4 gap-y-0.5 text-xs">
+        <span className="text-muted-foreground">
+          <b className="text-foreground font-mono text-base font-medium">
+            {data.exact.toLocaleString("en")}
+          </b>{" "}
+          exact recoveries, {((data.exact / data.total) * 100).toFixed(1)}% of test molecules
+        </span>
+        <span className="text-muted-foreground">
+          <b className="text-foreground font-mono text-base font-medium">{others}</b> other valid
+          outputs, charted below
+        </span>
+      </div>
       <ChartWidth>
         {({ width }) => {
           if (width <= 0) return null;
           const x = scaleLinear<number>({ domain: [0, 1], range: [M.l, width - M.r] });
-          const y = scaleSqrt<number>({ domain: [0, 1150], range: [H - M.b, M.t] });
+          const y = scaleLinear<number>({
+            domain: [0, Math.max(...bins)],
+            range: [H - M.b, M.t],
+            nice: true,
+          });
           const bw = (width - M.l - M.r) / bins.length;
           return (
             <svg
               width={width}
               height={H}
               role="img"
-              aria-label="Distribution of Tanimoto similarity"
+              aria-label="Distribution of Tanimoto similarity for valid outputs that are not exact recoveries"
               className="block"
             >
-              {[0, 100, 250, 500, 1000].map((t) => (
+              {y.ticks(4).map((t) => (
                 <g key={t}>
                   <line x1={M.l} x2={width - M.r} y1={y(t)} y2={y(t)} className="stroke-border" />
                   <text
@@ -63,13 +80,11 @@ export function TanimotoHistogram({ data }: { data: ExperimentsData["tanimoto"] 
                 const base = H - M.b;
                 const r = Math.min(4, base - top);
                 const lo = i / bins.length;
-                const exact = i === bins.length - 1;
                 return (
                   <g key={i}>
                     <path
                       d={`M${left},${base}V${top + r}Q${left},${top} ${left + r},${top}H${left + w - r}Q${left + w},${top} ${left + w},${top + r}V${base}Z`}
-                      className={exact ? "fill-brand" : "fill-subtle"}
-                      opacity={exact ? 1 : 0.65}
+                      className="fill-brand"
                     />
                     <rect
                       x={M.l + i * bw}
@@ -86,8 +101,8 @@ export function TanimotoHistogram({ data }: { data: ExperimentsData["tanimoto"] 
                             </b>
                             <TipRow label="Molecules" value={v.toLocaleString("en")} />
                             <TipRow
-                              label="Share of valid"
-                              value={`${((v / data.valid) * 100).toFixed(1)}%`}
+                              label="Share of these outputs"
+                              value={`${((v / others) * 100).toFixed(1)}%`}
                             />
                           </>,
                         )
