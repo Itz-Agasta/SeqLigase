@@ -21,9 +21,10 @@ export function ViewDock() {
   const toggle = useLab((s) => s.toggleDisplay);
   return (
     <div
+      data-chrome
       role="toolbar"
       aria-label="3D view"
-      className="bg-raise border-border-strong absolute bottom-3.5 left-1/2 flex -translate-x-1/2 items-center gap-0.5 rounded-[9px] border p-[3px] shadow-lg"
+      className="bg-raise border-border-strong pointer-events-auto absolute bottom-3.5 z-10 left-1/2 flex -translate-x-1/2 items-center gap-0.5 rounded-[9px] border p-[3px] shadow-lg"
     >
       {VIEWS.map((v) => (
         <button

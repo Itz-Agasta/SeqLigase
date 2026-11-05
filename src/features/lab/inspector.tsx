@@ -9,8 +9,9 @@ export function Inspector({ onRun }: { onRun: () => void }) {
   const stale = useLab((s) => s.status !== "done");
   return (
     <aside
+      data-chrome
       aria-label="Run and results"
-      className="bg-background min-h-0 w-[340px] flex-none overflow-y-auto border-l"
+      className="bg-background relative z-10 min-h-0 w-[340px] flex-none overflow-y-auto border-l"
     >
       <RunForm onRun={onRun} />
       <div className={cn(stale && "opacity-60")}>

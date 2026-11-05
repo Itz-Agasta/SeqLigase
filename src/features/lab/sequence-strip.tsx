@@ -42,7 +42,10 @@ export function SequenceStrip() {
     return () => window.removeEventListener("pointerup", up);
   }, [select]);
 
-  if (!record) return <div className="h-[158px] flex-none border-b" aria-busy="true" />;
+  if (!record)
+    return (
+      <div className="bg-background relative z-10 h-[158px] flex-none border-b" aria-busy="true" />
+    );
 
   const masked = (i: number) => i >= selection.start && i < selection.start + selection.length;
   const pointerProps = (i: number) => ({
@@ -58,7 +61,11 @@ export function SequenceStrip() {
   });
 
   return (
-    <section aria-label="SELFIES sequence" className="flex-none border-b px-4 pt-3 pb-3.5">
+    <section
+      data-chrome
+      aria-label="SELFIES sequence"
+      className="bg-background relative z-10 flex-none border-b px-4 pt-3 pb-3.5"
+    >
       <div className="mb-2.5 flex items-baseline gap-2.5">
         <h2 className="text-[13px] font-medium">SELFIES sequence</h2>
         <span className="text-subtle text-xs">

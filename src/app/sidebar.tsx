@@ -37,7 +37,10 @@ export function BrandMark() {
 export function Sidebar({ onSearch }: { onSearch: () => void }) {
   const { toggle } = useTheme();
   return (
-    <aside className="bg-sidebar flex min-h-0 flex-col border-r px-2 py-2.5">
+    <aside
+      data-chrome
+      className="bg-sidebar relative z-10 flex min-h-0 flex-col border-r px-2 py-2.5"
+    >
       <div className="flex items-center gap-2.5 px-2 pt-1.5 pb-3.5 text-sm font-semibold tracking-tight">
         <BrandMark />
         SeqLigase

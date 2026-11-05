@@ -310,3 +310,11 @@ export function buildMolecule({
     },
   };
 }
+
+export function animatePulses(built: BuiltMolecule, time: number) {
+  for (const p of built.pulses) {
+    p.scale.setScalar(1 + 0.08 * Math.sin(time * 2.4));
+    ((p as THREE.Line).material as THREE.LineBasicMaterial).opacity =
+      0.42 + 0.34 * Math.cos(time * 2.4);
+  }
+}

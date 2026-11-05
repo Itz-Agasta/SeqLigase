@@ -1,5 +1,6 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useRef } from "react";
 import { type LabView, useLab } from "@/state/lab-store";
+import { MomentOverlay } from "./moment-overlay";
 import { ViewDock } from "./view-dock";
 
 const Stage = lazy(() => import("@/scene/stage").then((m) => ({ default: m.Stage })));
@@ -18,7 +19,9 @@ const CAPTIONS: Record<LabView, { title: string; note: string }> = {
 };
 
 export function StagePanel() {
+  const stageRef = useRef<HTMLDivElement>(null);
   const view = useLab((s) => s.view);
+  const inMoment = useLab((s) => s.phase !== "idle");
   const response = useLab((s) => s.response);
   const predicted = view === "reconstructed" || view === "overlay";
   const mismatch = predicted && response ? !response.exact_recovery : false;
@@ -31,23 +34,33 @@ export function StagePanel() {
       : caption.note;
 
   return (
-    <div
-      className="bg-surface relative min-h-0 flex-1 overflow-hidden"
-      style={{
-        backgroundImage: "radial-gradient(var(--seq-dot) 1px, transparent 1px)",
-        backgroundSize: "22px 22px",
-      }}
-    >
-      <div className="absolute inset-0">
+    <div ref={stageRef} className="pointer-events-none relative min-h-0 flex-1">
+      <div
+        className="bg-surface fixed inset-0 -z-10"
+        style={{
+          backgroundImage: "radial-gradient(var(--seq-dot) 1px, transparent 1px)",
+          backgroundSize: "22px 22px",
+        }}
+      />
+      <div
+        className={
+          "fixed inset-0 -z-10 bg-[#050507] transition-opacity duration-500 " +
+          (inMoment ? "opacity-100" : "opacity-0")
+        }
+      />
+      <div className="pointer-events-auto">
         <Suspense fallback={null}>
-          <Stage />
+          <Stage stageRef={stageRef} />
         </Suspense>
       </div>
-      <div className="pointer-events-none absolute top-3 left-4">
+      <div data-chrome className="absolute top-3 left-4 z-10">
         <b className="block font-medium">{caption.title}</b>
         <span className="text-subtle text-xs">{note}</span>
       </div>
-      <div className="text-muted-foreground pointer-events-none absolute top-3 right-4 flex gap-3.5 text-xs">
+      <div
+        data-chrome
+        className="text-muted-foreground absolute top-3 right-4 z-10 flex gap-3.5 text-xs"
+      >
         <span className="flex items-center gap-1.5">
           <i className="size-[9px] rounded-full" style={{ background: "var(--seq-atom-c)" }} />
           Context
@@ -66,6 +79,7 @@ export function StagePanel() {
         </span>
       </div>
       <ViewDock />
+      <MomentOverlay />
     </div>
   );
 }

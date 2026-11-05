@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { client } from "@/engine/client";
 import { type MaskRatio, type MaxSpan, pickSpan } from "@/engine/mask";
+import type { DisplayedToken } from "@/scene/director";
 import type { InferenceClient, ModelId, MoleculeRecord, ReconstructResponse } from "@/engine/types";
 import { clampSelection, DEFAULT_SELECTION, type LabSelection } from "./url-state";
 
@@ -21,7 +22,11 @@ export interface LabState {
   hoveredToken: number | null;
   showHydrogens: boolean;
   spin: boolean;
-  displayed: Record<number, { token: string; p: number; locked: boolean }>;
+  displayed: Record<number, DisplayedToken>;
+  pendingRun: ReconstructResponse | null;
+  sceneReady: boolean;
+  beam: number | null;
+  checks: string[];
   error: string | null;
   load: (selection: LabSelection) => Promise<void>;
   setMolecule: (id: string) => Promise<void>;
@@ -54,6 +59,10 @@ export function createLabStore(api: InferenceClient) {
     showHydrogens: true,
     spin: true,
     displayed: {},
+    pendingRun: null,
+    sceneReady: false,
+    beam: null,
+    checks: [],
     error: null,
 
     async load(selection) {
@@ -137,7 +146,10 @@ export function createLabStore(api: InferenceClient) {
       if (get().status === "running") return;
       set({ status: "running", error: null });
       const response = await get().fetchResponse();
-      if (response) get().finish(response);
+      if (!response) return;
+      if (get().sceneReady)
+        set({ pendingRun: response, phase: "damage", displayed: {}, checks: [] });
+      else get().finish(response);
     },
   }));
 }
