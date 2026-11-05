@@ -16,10 +16,10 @@ describe("lab URL state", () => {
 
   it("reads a full selection", () => {
     const s = parseLabSearch(
-      new URLSearchParams("mol=aniline&model=chembert&start=0&len=3&seed=9"),
+      new URLSearchParams("mol=aniline&model=chemberta&start=0&len=3&seed=9"),
       known,
     );
-    expect(s).toEqual({ moleculeId: "aniline", model: "ChemBERT", start: 0, length: 3, seed: 9 });
+    expect(s).toEqual({ moleculeId: "aniline", model: "ChemBERTa", start: 0, length: 3, seed: 9 });
   });
 
   it("falls back on an unknown molecule", () => {

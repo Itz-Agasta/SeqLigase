@@ -3,7 +3,7 @@ import type { CurvePoint, ModelId } from "@/engine/types";
 export const MODEL_COLORS: Record<ModelId, string> = {
   BiLSTM: "var(--chart-1)",
   LSTM: "var(--chart-2)",
-  ChemBERT: "var(--chart-3)",
+  ChemBERTa: "var(--chart-3)",
   T5: "var(--chart-4)",
 };
 

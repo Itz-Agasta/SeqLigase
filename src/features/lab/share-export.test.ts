@@ -35,7 +35,7 @@ describe("share and export", () => {
   it("makes a URL that round-trips", () => {
     const selection = {
       moleculeId: "aniline",
-      model: "ChemBERT",
+      model: "ChemBERTa",
       start: 2,
       length: 3,
       seed: 8,

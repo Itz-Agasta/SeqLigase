@@ -26,7 +26,7 @@ def test_aniline_pin_for_every_model():
 
 def test_probabilities_sum_below_one_and_sort_descending():
     tokens = chem.tokens_of("Oc1ccccc1")
-    p = predictor.predict(stats(), "Phenol", tokens, "ChemBERT", 2, 3)
+    p = predictor.predict(stats(), "Phenol", tokens, "ChemBERTa", 2, 3)
     for cands in p.values():
         ps = [c["p"] for c in cands]
         assert ps == sorted(ps, reverse=True)
@@ -53,6 +53,6 @@ def test_error_rates_order_models():
                     p = predictor.predict(st, name, t, model, start, length)
                     hits += [p[i][0]["token"] == t[i] for i in p]
         acc[model] = statistics.mean(hits)
-    assert acc["BiLSTM"] > acc["LSTM"] >= acc["ChemBERT"] - 0.01 > acc["T5"]
+    assert acc["BiLSTM"] > acc["LSTM"] >= acc["ChemBERTa"] - 0.01 > acc["T5"]
     assert 0.72 < acc["BiLSTM"] < 0.95
     assert 0.5 < acc["T5"] < 0.8
