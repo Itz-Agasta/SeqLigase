@@ -19,6 +19,7 @@ export interface LabState {
   view: LabView;
   phase: MomentPhase;
   hoveredToken: number | null;
+  displayed: Record<number, { token: string; p: number; locked: boolean }>;
   error: string | null;
   load(selection: LabSelection): Promise<void>;
   setMolecule(id: string): Promise<void>;
@@ -28,12 +29,13 @@ export interface LabState {
   setView(view: LabView): void;
   setPhase(phase: MomentPhase): void;
   setHoveredToken(token: number | null): void;
+  setDisplayed(displayed: LabState["displayed"]): void;
   fetchResponse(): Promise<ReconstructResponse | null>;
   reconstruct(): Promise<void>;
   finish(response: ReconstructResponse): void;
 }
 
-const STALE = { status: "stale", response: null, view: "masked" } as const;
+const STALE = { status: "stale", response: null, view: "masked", displayed: {} } as const;
 
 export function createLabStore(api: InferenceClient) {
   return create<LabState>((set, get) => ({
@@ -46,6 +48,7 @@ export function createLabStore(api: InferenceClient) {
     view: "masked",
     phase: "idle",
     hoveredToken: null,
+    displayed: {},
     error: null,
 
     async load(selection) {
@@ -101,6 +104,7 @@ export function createLabStore(api: InferenceClient) {
     setView: (view) => set({ view }),
     setPhase: (phase) => set({ phase }),
     setHoveredToken: (hoveredToken) => set({ hoveredToken }),
+    setDisplayed: (displayed) => set({ displayed }),
 
     async fetchResponse() {
       const { selection } = get();
@@ -113,7 +117,14 @@ export function createLabStore(api: InferenceClient) {
     },
 
     finish(response) {
-      set({ response, status: "done", phase: "idle", view: "reconstructed", error: null });
+      set({
+        response,
+        status: "done",
+        phase: "idle",
+        view: "reconstructed",
+        displayed: {},
+        error: null,
+      });
     },
 
     async reconstruct() {
