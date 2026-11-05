@@ -103,7 +103,10 @@ export type CompareMetric = "acc" | "top3" | "exact" | "valid";
 
 export interface SplitData {
   curves: Record<ModelId, { acc: CurvePoint[]; loss: CurvePoint[] }>;
-  compare: Record<CompareMetric, { label: string; note: string; values: number[]; ci: number[]; domain: [number, number] }>;
+  compare: Record<
+    CompareMetric,
+    { label: string; note: string; values: number[]; ci: number[]; domain: [number, number] }
+  >;
   table: { id: string; input: string; model: string; mask: string; values: (number | null)[] }[];
   sweep: Record<ModelId, number[]>;
 }

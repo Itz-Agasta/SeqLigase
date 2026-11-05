@@ -1,0 +1,128 @@
+import { create } from "zustand";
+import { client } from "@/engine/client";
+import { type MaskRatio, type MaxSpan, pickSpan } from "@/engine/mask";
+import type { InferenceClient, ModelId, MoleculeRecord, ReconstructResponse } from "@/engine/types";
+import { clampSelection, DEFAULT_SELECTION, type LabSelection } from "./url-state";
+
+export type LabStatus = "stale" | "running" | "done";
+export type LabView = "original" | "masked" | "reconstructed" | "overlay";
+export type MomentPhase = "idle" | "damage" | "reading" | "ligation" | "verify";
+export type ResolvedSelection = LabSelection & { start: number };
+
+export interface LabState {
+  selection: ResolvedSelection;
+  ratio: MaskRatio;
+  maxSpan: MaxSpan;
+  record: MoleculeRecord | null;
+  response: ReconstructResponse | null;
+  status: LabStatus;
+  view: LabView;
+  phase: MomentPhase;
+  hoveredToken: number | null;
+  error: string | null;
+  load(selection: LabSelection): Promise<void>;
+  setMolecule(id: string): Promise<void>;
+  setModel(model: ModelId): void;
+  setMask(start: number, length: number): void;
+  setMaskPolicy(policy: { ratio?: MaskRatio; maxSpan?: MaxSpan; seed?: number }): void;
+  setView(view: LabView): void;
+  setPhase(phase: MomentPhase): void;
+  setHoveredToken(token: number | null): void;
+  fetchResponse(): Promise<ReconstructResponse | null>;
+  reconstruct(): Promise<void>;
+  finish(response: ReconstructResponse): void;
+}
+
+const STALE = { status: "stale", response: null, view: "masked" } as const;
+
+export function createLabStore(api: InferenceClient) {
+  return create<LabState>((set, get) => ({
+    selection: { ...DEFAULT_SELECTION },
+    ratio: 25,
+    maxSpan: 2,
+    record: null,
+    response: null,
+    status: "stale",
+    view: "masked",
+    phase: "idle",
+    hoveredToken: null,
+    error: null,
+
+    async load(selection) {
+      try {
+        const record = await api.molecule(selection.moleculeId);
+        const { ratio, maxSpan } = get();
+        const span =
+          selection.start === null
+            ? pickSpan(record.tokens, ratio, maxSpan, selection.seed)
+            : selection;
+        const resolved = clampSelection(
+          { ...selection, start: span.start, length: span.length },
+          record.tokens.length,
+        );
+        set({ record, selection: resolved, error: null, ...STALE });
+      } catch (err) {
+        set({ error: err instanceof Error ? err.message : String(err) });
+      }
+    },
+
+    async setMolecule(id) {
+      if (get().status === "running") return;
+      await get().load({ ...get().selection, moleculeId: id, start: null });
+    },
+
+    setModel(model) {
+      if (get().status === "running") return;
+      set((s) => ({ selection: { ...s.selection, model }, ...STALE }));
+    },
+
+    setMask(start, length) {
+      if (get().status === "running") return;
+      set((s) => ({ selection: { ...s.selection, start, length }, ...STALE }));
+    },
+
+    setMaskPolicy(policy) {
+      const { status, record, ratio, maxSpan, selection } = get();
+      if (status === "running" || !record) return;
+      const next = {
+        ratio: policy.ratio ?? ratio,
+        maxSpan: policy.maxSpan ?? maxSpan,
+        seed: policy.seed ?? selection.seed,
+      };
+      const span = pickSpan(record.tokens, next.ratio, next.maxSpan, next.seed);
+      set({
+        ratio: next.ratio,
+        maxSpan: next.maxSpan,
+        selection: { ...selection, ...span, seed: next.seed },
+        ...STALE,
+      });
+    },
+
+    setView: (view) => set({ view }),
+    setPhase: (phase) => set({ phase }),
+    setHoveredToken: (hoveredToken) => set({ hoveredToken }),
+
+    async fetchResponse() {
+      const { selection } = get();
+      try {
+        return await api.reconstruct(selection);
+      } catch (err) {
+        set({ status: "stale", error: err instanceof Error ? err.message : String(err) });
+        return null;
+      }
+    },
+
+    finish(response) {
+      set({ response, status: "done", phase: "idle", view: "reconstructed", error: null });
+    },
+
+    async reconstruct() {
+      if (get().status === "running") return;
+      set({ status: "running", error: null });
+      const response = await get().fetchResponse();
+      if (response) get().finish(response);
+    },
+  }));
+}
+
+export const useLab = createLabStore(client);
